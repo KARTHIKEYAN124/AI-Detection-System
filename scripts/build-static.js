@@ -11,7 +11,11 @@ fs.mkdirSync(dist, { recursive: true });
 fs.mkdirSync(server, { recursive: true });
 fs.mkdirSync(hostingDir, { recursive: true });
 fs.copyFileSync(path.join(root, "index.html"), path.join(dist, "index.html"));
-fs.copyFileSync(path.join(root, ".openai", "hosting.json"), path.join(hostingDir, "hosting.json"));
+const hosting = JSON.parse(fs.readFileSync(path.join(root, ".openai", "hosting.json"), "utf8"));
+fs.writeFileSync(
+  path.join(hostingDir, "hosting.json"),
+  JSON.stringify({ project_id: hosting.project_id }, null, 2)
+);
 
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const worker = `const html = ${JSON.stringify(html)};
