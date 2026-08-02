@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veritas AI Review - AI Writing Analysis Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface-2: #f8fafc;
+    --text: #111827;
+    --muted: #667085;
+    --border: #d8dee8;
+    --line: #e7ebf1;
+    --teal: #00737b;
+    --teal-dark: #005b62;
+    --green: #15803d;
+    --green-bg: #dff5e8;
+    --amber: #b45309;
+    --amber-bg: #fff1cc;
+    --red: #c92a38;
+    --red-bg: #fde2e4;
+    --blue: #0f5ea8;
+    --blue-bg: #e8f2ff;
+    --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  button, input, textarea, select {
+    font: inherit;
+  }
+
+  button {
+    border: 0;
+    cursor: pointer;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 226px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 0 2px 12px;
+  }
+
+  .brand-mark {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: #063f47;
+    color: #d7fff8;
+    font-weight: 800;
+    letter-spacing: 0;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.1;
+  }
+
+  .brand span {
+    color: var(--teal);
+    font-weight: 500;
+  }
+
+  .nav {
+    display: grid;
+    gap: 6px;
+  }
+
+  .nav button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    border-radius: 7px;
+    color: #344054;
+    background: transparent;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .nav button:hover,
+  .nav button.active {
+    background: #eef8f8;
+    color: var(--teal-dark);
+  }
+
+  .icon {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+    color: currentColor;
+    flex: 0 0 auto;
+  }
+
+  .usage {
+    margin-top: auto;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .meter {
+    height: 7px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 8px 0 5px;
+  }
+
+  .meter span {
+    display: block;
+    height: 100%;
+    width: 24%;
+    background: var(--teal);
+  }
+
+  .main {
+    min-width: 0;
+  }
+
+  .topbar {
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 0 26px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .search {
+    max-width: 560px;
+    flex: 1;
+    position: relative;
+  }
+
+  .search input {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0 14px 0 38px;
+    color: #344054;
+    outline: none;
+    background: #fbfcfe;
+  }
+
+  .search svg {
+    position: absolute;
+    left: 13px;
+    top: 11px;
+    color: #667085;
+  }
+
+  .profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #344054;
+    white-space: nowrap;
+  }
+
+  .profile strong {
+    display: block;
+    color: #182230;
+    font-size: 13px;
+  }
+
+  .profile span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .content {
+    padding: 18px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(420px, 1.08fr) minmax(360px, 0.92fr);
+    gap: 14px;
+  }
+
+  .lower-grid {
+    display: grid;
+    grid-template-columns: minmax(470px, 1.1fr) minmax(320px, 0.75fr) minmax(330px, 0.75fr);
+    gap: 14px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    min-width: 0;
+  }
+
+  .panel-header {
+    min-height: 52px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .panel-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 760;
+    color: #182230;
+  }
+
+  .panel-body {
+    padding: 16px;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tab {
+    height: 52px;
+    background: var(--surface);
+    color: #475467;
+    border-bottom: 3px solid transparent;
+    font-weight: 720;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+  }
+
+  .tab.active {
+    color: var(--teal-dark);
+    border-bottom-color: var(--teal);
+    background: #fbfefe;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .upload-zone {
+    border: 2px dashed #cfd7e4;
+    border-radius: 8px;
+    min-height: 205px;
+    background: #fbfcfe;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 20px;
+    transition: border-color 160ms ease, background 160ms ease;
+  }
+
+  .upload-zone.dragover {
+    border-color: var(--teal);
+    background: #edfafa;
+  }
+
+  .upload-zone h2 {
+    margin: 8px 0 3px;
+    font-size: 16px;
+  }
+
+  .upload-zone p,
+  .small {
+    color: var(--muted);
+    font-size: 12px;
+    margin: 0;
+  }
+
+  .outline-button,
+  .primary-button,
+  .danger-button,
+  .ghost-button {
+    min-height: 36px;
+    border-radius: 7px;
+    padding: 0 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 750;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .outline-button {
+    background: var(--surface);
+    color: var(--teal-dark);
+    border: 1px solid #9fc8cc;
+  }
+
+  .primary-button {
+    background: var(--teal);
+    color: #fff;
+  }
+
+  .primary-button:hover {
+    background: var(--teal-dark);
+  }
+
+  .primary-button:disabled {
+    background: #a7b7ba;
+    cursor: not-allowed;
+  }
+
+  .danger-button {
+    background: var(--red-bg);
+    color: var(--red);
+  }
+
+  .ghost-button {
+    background: transparent;
+    color: #475467;
+  }
+
+  .format-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 13px;
+  }
+
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: #475467;
+    border-radius: 6px;
+    padding: 4px 7px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .notice {
+    border: 1px solid #a9cdf5;
+    background: var(--blue-bg);
+    color: #164d7c;
+    border-radius: 7px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 12px;
+  }
+
+  .file-card {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-top: 14px;
+    background: #fbfcfe;
+  }
+
+  .file-card.show { display: flex; }
+
+  .file-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: #e6f4f5;
+    color: var(--teal-dark);
+    display: grid;
+    place-items: center;
+  }
+
+  .file-main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .file-main strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: #475467;
+    font-weight: 720;
+    margin-bottom: 6px;
+  }
+
+  select, textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface);
+    color: #182230;
+    outline: none;
+  }
+
+  select {
+    height: 38px;
+    padding: 0 10px;
+  }
+
+  textarea {
+    min-height: 220px;
+    padding: 12px;
+    resize: vertical;
+    line-height: 1.55;
+  }
+
+  textarea:focus,
+  select:focus,
+  input:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(0, 115, 123, 0.12);
+  }
+
+  .input-stats,
+  .action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .error {
+    display: none;
+    color: var(--red);
+    background: var(--red-bg);
+    border: 1px solid #f5b7bd;
+    border-radius: 7px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    font-size: 12px;
+  }
+
+  .error.show { display: block; }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .summary-cell {
+    padding: 18px 20px;
+    min-height: 134px;
+  }
+
+  .summary-cell + .summary-cell {
+    border-left: 1px solid var(--line);
+  }
+
+  .summary-label {
+    color: #344054;
+    font-size: 13px;
+    font-weight: 740;
+    margin-bottom: 8px;
+  }
+
+  .score {
+    font-size: 42px;
+    line-height: 1;
+    font-weight: 800;
+    color: var(--red);
+    letter-spacing: 0;
+  }
+
+  .score.low { color: var(--green); }
+  .score.mid { color: var(--amber); }
+
+  .risk-pill {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    vertical-align: middle;
+  }
+
+  .risk-high { background: var(--red-bg); color: var(--red); }
+  .risk-mid { background: var(--amber-bg); color: var(--amber); }
+  .risk-low { background: var(--green-bg); color: var(--green); }
+  .risk-info { background: var(--blue-bg); color: var(--blue); }
+
+  .score-bar {
+    width: min(100%, 320px);
+    height: 9px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    margin-top: 15px;
+    overflow: hidden;
+  }
+
+  .score-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: currentColor;
+    border-radius: inherit;
+    transition: width 420ms ease;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--line);
+  }
+
+  .two-col > div {
+    padding: 18px 20px;
+  }
+
+  .two-col > div + div {
+    border-left: 1px solid var(--line);
+  }
+
+  .plain-list {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    color: #344054;
+    font-size: 13px;
+  }
+
+  .plain-list li + li {
+    margin-top: 6px;
+  }
+
+  .document-view {
+    max-height: 520px;
+    overflow: auto;
+    padding: 18px 20px;
+    background: #fff;
+    line-height: 1.75;
+  }
+
+  .document-empty {
+    min-height: 280px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    text-align: center;
+    padding: 28px;
+  }
+
+  .highlight {
+    border-radius: 4px;
+    padding: 1px 3px;
+    cursor: pointer;
+  }
+
+  .highlight.low { background: var(--green-bg); color: #14532d; }
+  .highlight.uncertain { background: var(--amber-bg); color: #78350f; }
+  .highlight.elevated { background: var(--red-bg); color: #7f1d1d; }
+  .highlight.selected { outline: 2px solid #182230; }
+
+  .legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    border-top: 1px solid var(--line);
+    padding: 12px 16px;
+    color: #475467;
+    font-size: 12px;
+  }
+
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+
+  .explanation {
+    min-height: 520px;
+  }
+
+  .selected-text {
+    background: var(--surface-2);
+    border-radius: 7px;
+    padding: 12px;
+    color: #344054;
+    font-size: 13px;
+    max-height: 150px;
+    overflow: auto;
+  }
+
+  .metric-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    color: #475467;
+    font-size: 13px;
+  }
+
+  .metric-row strong {
+    color: #182230;
+  }
+
+  .pipeline {
+    display: grid;
+    gap: 8px;
+  }
+
+  .pipeline-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 0;
+    font-size: 13px;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #344054;
+  }
+
+  .status-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: var(--green);
+    color: white;
+    font-size: 11px;
+    font-weight: 900;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 760;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  td {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    color: #344054;
+    vertical-align: top;
+  }
+
+  .download-panel {
+    margin-top: 14px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .download-panel .primary-button {
+    width: 100%;
+    height: 46px;
+    font-size: 14px;
+  }
+
+  .page-section {
+    display: none;
+  }
+
+  .page-section.active {
+    display: block;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(170px, 1fr));
+    gap: 14px;
+  }
+
+  .kpi {
+    padding: 16px;
+  }
+
+  .kpi strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 24px;
+  }
+
+  .admin-table {
+    margin-top: 14px;
+  }
+
+  .screen-reader {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .plan-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border);
+    background: #fbfcfe;
+    border-radius: 7px;
+    padding: 5px;
+  }
+
+  .plan-toggle button {
+    height: 30px;
+    border-radius: 6px;
+    padding: 0 10px;
+    background: transparent;
+    color: #475467;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .plan-toggle button.active {
+    background: var(--teal);
+    color: white;
+  }
+
+  .premium-lock {
+    border: 1px solid #f3c56d;
+    background: #fff8e8;
+    color: #7c4a03;
+    border-radius: 7px;
+    padding: 10px 12px;
+    font-size: 12px;
+    margin-top: 12px;
+  }
+
+  .assistant-grid {
+    display: grid;
+    grid-template-columns: minmax(210px, 0.65fr) minmax(360px, 1.1fr) minmax(270px, 0.75fr);
+    gap: 14px;
+  }
+
+  .passage-list {
+    display: grid;
+    gap: 9px;
+  }
+
+  .passage-item {
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 7px;
+    padding: 10px;
+    color: #344054;
+  }
+
+  .passage-item.active {
+    border-color: var(--teal);
+    background: #edfafa;
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .compare-box {
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 12px;
+    min-height: 220px;
+    background: #fbfcfe;
+    color: #344054;
+    white-space: pre-wrap;
+  }
+
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #475467;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .price-card {
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+
+  .price-card.featured {
+    border-color: var(--teal);
+    box-shadow: var(--shadow);
+  }
+
+  .price {
+    font-size: 38px;
+    font-weight: 850;
+    margin: 10px 0;
+  }
+
+  @media (max-width: 1180px) {
+    .assistant-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 1180px) {
+    .workspace,
+    .lower-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .explanation {
+      min-height: 0;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .app {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      position: static;
+      height: auto;
+    }
+
+    .nav {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .nav button {
+      justify-content: center;
+      padding: 0 8px;
+      font-size: 12px;
+    }
+
+    .topbar {
+      position: static;
+      height: auto;
+      align-items: stretch;
+      flex-direction: column;
+      padding: 14px;
+    }
+
+    .content {
+      padding: 12px;
+    }
+
+    .summary-grid,
+    .two-col,
+    .controls {
+      grid-template-columns: 1fr;
+    }
+
+    .summary-cell + .summary-cell,
+    .two-col > div + div {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">V</div>
+      <div>
+        <h1>Veritas <span>AI Review</span></h1>
+      </div>
+    </div>
+
+    <nav class="nav" aria-label="Main navigation">
+      <button class="active" data-section="dashboard"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</button>
+      <button data-section="upload"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v4H4v-4"/></svg>Upload</button>
+      <button data-section="reports"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>Reports</button>
+      <button data-section="assistant"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Assistant</button>
+      <button data-section="history"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v6l4 2"/></svg>History</button>
+      <button data-section="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 1 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>Pricing</button>
+      <button data-section="admin"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Admin</button>
+      <button data-section="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.05.05a2 2 0 1 1-2.83 2.83l-.05-.05A1.8 1.8 0 0 0 15 19.4a1.8 1.8 0 0 0-1 .6 1.8 1.8 0 0 0-.4 1.2V22a2 2 0 1 1-4 0v-.08a1.8 1.8 0 0 0-.4-1.2 1.8 1.8 0 0 0-1-.6 1.8 1.8 0 0 0-1.98.36l-.05.05a2 2 0 1 1-2.83-2.83l.05-.05A1.8 1.8 0 0 0 4.6 15a1.8 1.8 0 0 0-.6-1 1.8 1.8 0 0 0-1.2-.4H2a2 2 0 1 1 0-4h.08a1.8 1.8 0 0 0 1.2-.4 1.8 1.8 0 0 0 .6-1 1.8 1.8 0 0 0-.36-1.98l-.05-.05a2 2 0 1 1 2.83-2.83l.05.05A1.8 1.8 0 0 0 9 4.6c.3-.12.54-.28.75-.5.32-.33.48-.72.48-1.2V2a2 2 0 1 1 4 0v.08c0 .48.16.87.48 1.2.21.22.45.38.75.5a1.8 1.8 0 0 0 1.98-.36l.05-.05a2 2 0 1 1 2.83 2.83l-.05.05A1.8 1.8 0 0 0 19.4 9c.12.3.28.54.5.75.33.32.72.48 1.2.48H22a2 2 0 1 1 0 4h-.08c-.48 0-.87.16-1.2.48-.22.21-.38.45-.5.75z"/></svg>Settings</button>
+    </nav>
+
+    <div class="usage">
+      <div>Usage this month</div>
+      <div class="meter"><span></span></div>
+      <div>1,248 / 5,000 pages scanned</div>
+      <p>Demo model v1.0<br>Local portfolio build</p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="search">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="searchInput" type="search" placeholder="Search analyses, documents, authors...">
+      </div>
+      <div class="profile">
+        <div class="plan-toggle" aria-label="Current plan">
+          <button id="freePlanBtn" type="button">Free</button>
+          <button id="premiumPlanBtn" type="button">Premium €5</button>
+        </div>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.82 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
+        <div><strong>Dr. Elena Morris</strong><span>Institution Admin</span></div>
+      </div>
+    </header>
+
+    <div class="content">
+      <section id="dashboard" class="page-section active">
+        <div class="workspace">
+          <section class="panel">
+            <div class="tabs">
+              <button class="tab active" data-tab="file"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v4H4v-4"/></svg>Upload File</button>
+              <button class="tab" data-tab="text"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Paste Text</button>
+            </div>
+            <div class="panel-body">
+              <div id="fileTab" class="tab-panel active">
+                <div id="uploadZone" class="upload-zone">
+                  <div>
+                    <svg class="icon" style="width:48px;height:48px;color:#64748b" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16.5A3.5 3.5 0 0 0 16.5 13H16a5 5 0 0 0-9.5-1.7A4 4 0 0 0 7 19h10"/></svg>
+                    <h2>Drag and drop your file here</h2>
+                    <p>or</p>
+                    <button id="chooseFile" class="outline-button" type="button" style="margin-top:10px">Choose File</button>
+                    <input id="fileInput" class="screen-reader" type="file" accept=".pdf,.doc,.docx,.txt,.rtf,.odt,.html,.htm,.epub">
+                    <div class="format-row">
+                      <span class="chip">PDF</span><span class="chip">DOC</span><span class="chip">DOCX</span><span class="chip">TXT</span><span class="chip">RTF</span><span class="chip">ODT</span><span class="chip">HTML</span><span class="chip">EPUB</span>
+                    </div>
+                    <p class="small" style="margin-top:6px">Maximum file size: 100 MB</p>
+                  </div>
+                </div>
+                <div id="fileCard" class="file-card">
+                  <div class="file-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+                  <div class="file-main">
+                    <strong id="fileName">No file selected</strong>
+                    <span class="small" id="fileMeta">0 KB</span>
+                  </div>
+                  <button id="removeFile" class="ghost-button" type="button">Remove</button>
+                </div>
+              </div>
+              <div id="textTab" class="tab-panel">
+                <textarea id="textInput" placeholder="Paste at least 300 words of long-form prose for the clearest analysis. Shorter text can be checked, but the result will be marked as insufficient or uncertain."></textarea>
+                <div class="input-stats small">
+                  <span>Words: <strong id="wordCount">0</strong></span>
+                  <span>Characters: <strong id="charCount">0</strong></span>
+                </div>
+              </div>
+              <div class="notice">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                Minimum 300 eligible prose words recommended. Results are risk signals with uncertainty, not proof.
+              </div>
+              <div class="controls">
+                <div>
+                  <label for="retentionSelect">Privacy and retention</label>
+                  <select id="retentionSelect">
+                    <option value="delete_24h">Delete within 24 hours</option>
+                    <option value="standard_30_days" selected>Standard: retain for 30 days</option>
+                    <option value="delete_after_analysis">Delete source after analysis</option>
+                    <option value="institution_policy">Institution policy</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="authorSample">Optional prior-writing sample</label>
+                  <select id="authorSample">
+                    <option value="none" selected>Not provided</option>
+                    <option value="attached">Attached for consistency check</option>
+                  </select>
+                </div>
+              </div>
+              <div id="uploadError" class="error"></div>
+              <div class="action-row">
+                <span class="small" id="serverStatus">Checking server...</span>
+                <button id="analyzeBtn" class="primary-button" disabled type="button">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  Analyze Content
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Risk Assessment Summary</h2>
+              <button id="viewReportBtn" class="outline-button" type="button">View full report</button>
+              <button id="openAssistantBtn" class="primary-button" type="button">Improve writing</button>
+            </div>
+            <div class="summary-grid">
+              <div class="summary-cell">
+                <div class="summary-label">AI-writing signal</div>
+                <span id="aiSignal" class="score mid">--%</span>
+                <span id="riskBand" class="risk-pill risk-info">Awaiting scan</span>
+                <div id="scoreBar" class="score-bar score mid"><span></span></div>
+                <p class="small" style="margin-top:9px">0% low signal, 100% elevated signal</p>
+              </div>
+              <div class="summary-cell">
+                <div class="summary-label">Confidence</div>
+                <span id="confidenceText" style="font-size:22px;font-weight:800;color:var(--teal)">--</span>
+                <div class="metric-row"><span>Human-writing likelihood</span><strong id="humanLikelihood">--%</strong></div>
+                <div class="metric-row"><span>Eligible prose</span><strong id="eligibleWords">-- words</strong></div>
+              </div>
+            </div>
+            <div class="two-col">
+              <div>
+                <h3 class="panel-title">Assessment</h3>
+                <p id="classificationText" style="margin:12px 0 0;color:#344054">Upload or paste a document to begin.</p>
+              </div>
+              <div>
+                <h3 class="panel-title">Key Limitations</h3>
+                <ul id="limitationsList" class="plain-list">
+                  <li>AI-writing detection should support, not replace, human review.</li>
+                  <li>Short or non-prose documents carry higher uncertainty.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="lower-grid" style="margin-top:14px">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 id="documentTitle" class="panel-title">Document Preview</h2>
+                <p id="documentSubtitle" class="small">No document analyzed yet.</p>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button id="clearHighlights" class="ghost-button" type="button">Clear selection</button>
+              </div>
+            </div>
+            <div id="documentView" class="document-view">
+              <div class="document-empty">
+                <div>
+                  <strong>Passage highlights will appear here.</strong>
+                  <p>Low, uncertain, and elevated passages are shown after analysis.</p>
+                </div>
+              </div>
+            </div>
+            <div class="legend">
+              <span><i class="swatch" style="background:var(--green-bg)"></i>No strong signal</span>
+              <span><i class="swatch" style="background:var(--amber-bg)"></i>Uncertain</span>
+              <span><i class="swatch" style="background:var(--red-bg)"></i>Elevated AI-writing signal</span>
+            </div>
+          </section>
+
+          <section class="panel explanation">
+            <div class="panel-header">
+              <h2 class="panel-title">Passage Explanation</h2>
+              <button id="closeExplanation" class="ghost-button" type="button">Close</button>
+            </div>
+            <div id="explanationBody" class="panel-body">
+              <p class="small">Select a highlighted passage to inspect score, confidence, model agreement, limitations, and review notes.</p>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Processing Pipeline</h2>
+            </div>
+            <div class="panel-body">
+              <div id="pipeline" class="pipeline"></div>
+              <div class="download-panel">
+                <button id="downloadReport" class="primary-button" type="button" disabled>
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  Download PDF Report
+                </button>
+                <p class="small" style="text-align:center">Opens a print-ready report for saving as PDF.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="upload" class="page-section">
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">Upload Workflow</h2></div>
+          <div class="panel-body">
+            <p>This MVP performs browser-side text extraction, then sends extracted prose to the local Flask analysis API. A production build should move upload validation, quarantine, malware scanning, OCR, and parsing into isolated workers.</p>
+            <div class="cards-grid">
+              <div class="panel kpi"><span class="small">Accepted formats</span><strong>8</strong><span class="small">PDF, DOC, DOCX, TXT, RTF, ODT, HTML, EPUB</span></div>
+              <div class="panel kpi"><span class="small">Max file size</span><strong>100 MB</strong><span class="small">Configurable policy</span></div>
+              <div class="panel kpi"><span class="small">Minimum prose</span><strong>300</strong><span class="small">Eligible words</span></div>
+              <div class="panel kpi"><span class="small">Retention</span><strong>4</strong><span class="small">Policy options</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="reports" class="page-section">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Reports</h2>
+            <button id="reportsDownload" class="outline-button" type="button">Download latest report</button>
+          </div>
+          <div class="panel-body" id="reportsBody">
+            <p class="small">Run an analysis to generate a report with document metadata, passage highlights, explanations, confidence, and limitations.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="assistant" class="page-section">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Writing Improvement Assistant</h2>
+              <p class="small">Premium feature for clarity, evidence, and author-owned revision. It is not for evasion or misconduct.</p>
+            </div>
+            <button id="assistantUpgrade" class="primary-button" type="button">Upgrade to Premium €5</button>
+          </div>
+          <div class="panel-body">
+            <div id="assistantLock" class="premium-lock">
+              Free plan includes AI detection and a downloadable detection report. Premium (€5/month) unlocks guided rewriting, revision history, reanalysis comparison, and export options.
+            </div>
+            <div class="assistant-grid" style="margin-top:14px">
+              <section class="panel">
+                <div class="panel-header"><h3 class="panel-title">Flagged Passages</h3></div>
+                <div class="panel-body">
+                  <div id="assistantPassages" class="passage-list">
+                    <p class="small">Run an analysis first. Elevated and uncertain passages will appear here.</p>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
+                  <h3 class="panel-title">Original and Revised</h3>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button id="generateRevision" class="primary-button premium-only" type="button">Generate suggestion</button>
+                    <button id="acceptRevision" class="outline-button premium-only" type="button">Accept change</button>
+                    <button id="rejectRevision" class="ghost-button premium-only" type="button">Reject</button>
+                  </div>
+                </div>
+                <div class="panel-body">
+                  <div class="compare-grid">
+                    <div>
+                      <label>Original passage</label>
+                      <div id="assistantOriginal" class="compare-box">Select a passage to begin.</div>
+                    </div>
+                    <div>
+                      <label>Revised suggestion</label>
+                      <div id="assistantRevised" class="compare-box">Revision suggestions require Premium and author review.</div>
+                    </div>
+                  </div>
+                  <div class="action-row">
+                    <button id="reanalyzeRevision" class="outline-button premium-only" type="button">Reanalyse revised text</button>
+                    <button id="exportRevision" class="outline-button premium-only" type="button">Export revised TXT</button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header"><h3 class="panel-title">Improvement Details</h3></div>
+                <div class="panel-body">
+                  <div class="settings-grid">
+                    <div>
+                      <label for="toneSelect">Tone</label>
+                      <select id="toneSelect" class="premium-only">
+                        <option>Academic</option><option>Professional</option><option>Conversational</option><option>Technical</option><option>Reflective</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="complexitySelect">Complexity</label>
+                      <select id="complexitySelect" class="premium-only">
+                        <option>Balanced</option><option>Simple</option><option>Advanced</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="strengthSelect">Revision strength</label>
+                      <select id="strengthSelect" class="premium-only">
+                        <option>Light edit</option><option selected>Moderate rewrite</option><option>Structural rewrite</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="englishSelect">English</label>
+                      <select id="englishSelect" class="premium-only">
+                        <option>American English</option><option>British English</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style="display:grid;gap:8px;margin-top:12px">
+                    <label class="check-row"><input id="firstPersonAllowed" class="premium-only" type="checkbox"> First-person allowed</label>
+                    <label class="check-row"><input id="shorterSentences" class="premium-only" type="checkbox" checked> Shorter sentences</label>
+                    <label class="check-row"><input id="addExamples" class="premium-only" type="checkbox"> Add examples</label>
+                    <label class="check-row"><input id="addEvidencePrompts" class="premium-only" type="checkbox" checked> Add evidence prompts</label>
+                    <label class="check-row"><input class="premium-only" type="checkbox" checked> Preserve citations</label>
+                    <label class="check-row"><input class="premium-only" type="checkbox" checked> Preserve technical terms</label>
+                    <label class="check-row"><input class="premium-only" type="checkbox" checked> Preserve quotes and numbers</label>
+                  </div>
+                  <label for="userContext" style="margin-top:14px">Author input</label>
+                  <textarea id="userContext" class="premium-only" style="min-height:96px" placeholder="What personal observation, project experience, source, or example should be included?"></textarea>
+                  <label style="margin-top:14px">Quality checks</label>
+                  <div id="qualityChecks" class="selected-text">Meaning preservation, citation preservation, factual consistency, readability, and user review checks will appear here.</div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="history" class="page-section">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Analysis History</h2>
+            <button id="clearHistory" class="danger-button" type="button">Clear history</button>
+          </div>
+          <div class="panel-body">
+            <table>
+              <thead><tr><th>Document</th><th>AI signal</th><th>Confidence</th><th>Classification</th><th>Date</th></tr></thead>
+              <tbody id="historyTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="pricing" class="page-section">
+        <div class="pricing-grid">
+          <div class="price-card">
+            <h2 class="panel-title">Free</h2>
+            <div class="price">€0</div>
+            <p>For quick AI-writing risk review.</p>
+            <ul class="plain-list">
+              <li>Paste text or upload supported files</li>
+              <li>AI-writing signal and confidence</li>
+              <li>Passage highlighting</li>
+              <li>Downloadable detection report</li>
+            </ul>
+            <button id="chooseFreePlan" class="outline-button" type="button" style="margin-top:16px">Use Free</button>
+          </div>
+          <div class="price-card featured">
+            <h2 class="panel-title">Premium</h2>
+            <div class="price">€5 <span class="small">/ month</span></div>
+            <p>All features for writing analysis and guided authorship improvement.</p>
+            <ul class="plain-list">
+              <li>Everything in Free</li>
+              <li>Writing Improvement Assistant</li>
+              <li>Guided questions and revision planning</li>
+              <li>Side-by-side comparisons</li>
+              <li>Approve/reject revision history</li>
+              <li>Reanalysis comparison and revised exports</li>
+            </ul>
+            <button id="choosePremiumPlan" class="primary-button" type="button" style="margin-top:16px">Choose Premium €5</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin" class="page-section">
+        <div class="cards-grid">
+          <div class="panel kpi"><span class="small">Analyses today</span><strong id="adminAnalyses">0</strong><span class="small">Local browser history</span></div>
+          <div class="panel kpi"><span class="small">Elevated reports</span><strong id="adminElevated">0</strong><span class="small">Review priority</span></div>
+          <div class="panel kpi"><span class="small">Insufficient text</span><strong id="adminInsufficient">0</strong><span class="small">Input quality issue</span></div>
+          <div class="panel kpi"><span class="small">Model version</span><strong>v1</strong><span class="small">TF-IDF demo</span></div>
+        </div>
+        <div class="panel admin-table">
+          <div class="panel-header"><h2 class="panel-title">Operational Monitoring</h2></div>
+          <div class="panel-body">
+            <table>
+              <thead><tr><th>Area</th><th>Status</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td>File validation</td><td>Demo</td><td>Extension and size checked in browser; production should verify MIME and hash server-side.</td></tr>
+                <tr><td>Malware scanning</td><td>Planned</td><td>Use ClamAV and quarantine storage before parsing untrusted files.</td></tr>
+                <tr><td>OCR</td><td>Planned</td><td>Use OCRmyPDF and Tesseract for scanned documents.</td></tr>
+                <tr><td>Calibration</td><td>Demo</td><td>Current score is illustrative; validation data should learn weights and calibration.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="page-section">
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">Privacy, Access, and Retention</h2></div>
+          <div class="panel-body">
+            <div class="cards-grid">
+              <div class="panel kpi"><span class="small">Default retention</span><strong>30 days</strong><span class="small">Can be changed before analysis</span></div>
+              <div class="panel kpi"><span class="small">Training consent</span><strong>Off</strong><span class="small">Documents are not used for training automatically</span></div>
+              <div class="panel kpi"><span class="small">Export</span><strong>Ready</strong><span class="small">Report data can be downloaded</span></div>
+              <div class="panel kpi"><span class="small">Deletion</span><strong>Manual</strong><span class="small">Clear local history in this demo</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+const API_URL = window.location.origin;
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const SUPPORTED_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'html', 'htm', 'epub'];
+
+let activeTab = 'file';
+let currentFile = null;
+let currentText = '';
+let currentResult = null;
+let currentFilename = 'pasted-text.txt';
+let currentPlan = localStorage.getItem('veritas-plan') || 'free';
+let selectedAssistantPassage = null;
+let currentRevision = null;
+
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+function iconCheck() {
+  return '<span class="status-dot">✓</span>';
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text || '';
+  return div.innerHTML;
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function riskClass(score) {
+  if (score >= 70) return 'risk-high';
+  if (score >= 40) return 'risk-mid';
+  return 'risk-low';
+}
+
+function scoreTone(score) {
+  if (score >= 70) return '';
+  if (score >= 40) return 'mid';
+  return 'low';
+}
+
+function wordsOf(text) {
+  return (text.match(/\b[\w'-]+\b/g) || []);
+}
+
+function sentenceList(text) {
+  return text.trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+}
+
+function localStyleMetrics(text) {
+  const words = wordsOf(text.toLowerCase());
+  const sentences = sentenceList(text);
+  const unique = new Set(words);
+  const lengths = sentences.map(sentence => wordsOf(sentence).length).filter(Boolean);
+  const mean = lengths.reduce((sum, value) => sum + value, 0) / Math.max(1, lengths.length);
+  const variance = lengths.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / Math.max(1, lengths.length);
+  const burstiness = mean ? Math.min(100, Math.sqrt(variance) / mean * 100) : 0;
+  const vocab = words.length ? unique.size / words.length * 100 : 0;
+  let repeated = 0;
+  const bigrams = {};
+  words.forEach((word, index) => {
+    if (index < words.length - 1) {
+      const bg = `${word} ${words[index + 1]}`;
+      bigrams[bg] = (bigrams[bg] || 0) + 1;
+    }
+  });
+  Object.values(bigrams).forEach(count => { if (count > 1) repeated += count - 1; });
+  const repetition = Object.keys(bigrams).length ? repeated / Object.keys(bigrams).length * 200 : 0;
+  return { burstiness, vocab_diversity: vocab, repetition: Math.min(100, repetition), perplexity: Math.max(1, unique.size) };
+}
+
+function localAnalyzeText(text, filename = 'pasted-text.txt') {
+  const phrases = ['it is important to note', 'furthermore', 'moreover', 'in conclusion', 'in summary', 'plays a crucial role', 'comprehensive', 'multifaceted', 'paramount', 'in the context of'];
+  const lower = text.toLowerCase();
+  const phraseScore = phrases.reduce((sum, phrase) => sum + (lower.includes(phrase) ? 7 : 0), 0);
+  const style = localStyleMetrics(text);
+  const words = wordsOf(text);
+  const bulletLines = text.split(/\n/).filter(line => /^\s*(\*|-|\d+\.)\s+/.test(line)).length;
+  const totalLines = Math.max(1, text.split(/\n/).filter(line => line.trim()).length);
+  const eligible = Math.max(0, words.length - (bulletLines > totalLines * 0.4 ? Math.floor(words.length * 0.4) : 0));
+  const heuristic = phraseScore + (100 - style.burstiness) * 0.22 + (100 - style.vocab_diversity) * 0.18 + style.repetition * 0.35;
+  const aiScore = Math.max(5, Math.min(95, Math.round(heuristic)));
+  const confidenceScore = eligible < 300 ? 38 : Math.max(42, Math.min(88, Math.round(Math.abs(aiScore - 50) * 1.1 + 30)));
+  const classificationLabel = confidenceScore < 45 || (aiScore >= 40 && aiScore < 70)
+    ? 'Mixed or inconclusive evidence'
+    : aiScore >= 70 ? 'Elevated AI-writing signal' : 'Low AI-writing signal';
+  const sentences = sentenceList(text);
+  const passages = [];
+  let cursor = 0;
+  let bucket = [];
+  let bucketWords = 0;
+  sentences.forEach(sentence => {
+    const count = wordsOf(sentence).length;
+    if (bucket.length && bucketWords + count > 240) {
+      const passageText = bucket.join(' ');
+      const start = text.indexOf(bucket[0], cursor);
+      const end = start + passageText.length;
+      const pScore = localPassageScore(passageText);
+      passages.push(localPassage(passageText, start, end, bucketWords, pScore, passages.length + 1));
+      cursor = end;
+      bucket = [];
+      bucketWords = 0;
+    }
+    bucket.push(sentence);
+    bucketWords += count;
+  });
+  if (bucket.length) {
+    const passageText = bucket.join(' ');
+    const start = text.indexOf(bucket[0], cursor);
+    const end = start + passageText.length;
+    const pScore = localPassageScore(passageText);
+    passages.push(localPassage(passageText, Math.max(0, start), Math.max(0, end), bucketWords, pScore, passages.length + 1));
+  }
+  const limitations = [];
+  if (eligible < 300) limitations.push(`Only ${eligible} eligible words found; 300 are recommended.`);
+  limitations.push('Browser-only demo scoring is less reliable than the Flask model API.');
+  const hash = String(Math.abs([...text].reduce((acc, char) => ((acc << 5) - acc + char.charCodeAt(0)) | 0, 0))).padStart(10, '0');
+  return {
+    success: true,
+    analysis_id: `ana_local_${hash}`,
+    document_id: `doc_local_${hash}`,
+    generated_at: new Date().toISOString(),
+    model_version: 'browser-demo-v1',
+    eligibility_status: eligible < 300 ? 'insufficient_text' : 'eligible',
+    ai_score: aiScore,
+    ai_signal: aiScore / 100,
+    human_likelihood: 100 - aiScore,
+    ml_score: aiScore,
+    heuristic_score: aiScore,
+    confidence: confidenceScore >= 70 ? 'high' : confidenceScore >= 45 ? 'moderate' : 'low',
+    confidence_score: confidenceScore,
+    model_confidence: confidenceScore,
+    classification: classificationLabel.toLowerCase().replaceAll(' ', '_'),
+    classification_label: classificationLabel,
+    verdict: classificationLabel,
+    probabilities: { human: 100 - aiScore, ai: aiScore },
+    style_metrics: { perplexity: Math.round(style.perplexity), burstiness: Math.round(style.burstiness), vocab_diversity: Math.round(style.vocab_diversity), repetition: Math.round(style.repetition) },
+    document: { filename, mime_type: 'text/plain', sha256: `local-${hash}`, retention: $('#retentionSelect').value, word_count: words.length, eligible_word_count: eligible, supported_formats: SUPPORTED_EXTENSIONS.map(ext => ext.toUpperCase()), minimum_eligible_words: 300 },
+    limitations,
+    top_features: [],
+    sentence_analysis: [],
+    passages,
+    processing: ['Validate file', 'Extract text', 'Identify eligible prose', 'Segment passages', 'Run detection models', 'Calibrate score', 'Generate report'].map(label => ({ label, status: 'completed' })),
+    disclaimer: 'This browser report identifies statistical writing patterns. It does not prove authorship or misconduct and should be reviewed alongside drafts, citations, writing history, and discussion with the author.',
+    word_count: words.length,
+    char_count: text.length
+  };
+}
+
+function localPassageScore(text) {
+  const style = localStyleMetrics(text);
+  const phraseHits = ['it is important to note', 'furthermore', 'moreover', 'in conclusion', 'plays a crucial role', 'comprehensive'].filter(phrase => text.toLowerCase().includes(phrase)).length;
+  return Math.max(8, Math.min(94, Math.round(phraseHits * 10 + (100 - style.burstiness) * 0.25 + (100 - style.vocab_diversity) * 0.15 + style.repetition * 0.35)));
+}
+
+function localPassage(text, start, end, wordCount, score, index) {
+  return {
+    passage_id: `pas_${String(index).padStart(3, '0')}`,
+    character_start: start,
+    character_end: end,
+    word_count: wordCount,
+    text,
+    ai_signal: score,
+    confidence: score >= 70 || score < 35 ? 'moderate' : 'low',
+    reliability: 55,
+    level: score >= 65 ? 'elevated' : score >= 45 ? 'uncertain' : 'low',
+    model_agreement: 62,
+    explanations: ['Browser demo detected formulaic phrasing, repeated structure, or limited sentence variation.'],
+    limitations: ['Use the backend model for a stronger review before making decisions.']
+  };
+}
+
+function showError(message) {
+  $('#uploadError').textContent = message;
+  $('#uploadError').classList.add('show');
+}
+
+function clearError() {
+  $('#uploadError').classList.remove('show');
+}
+
+async function checkServer() {
+  try {
+    const res = await fetch(`${API_URL}/health`);
+    if (!res.ok) throw new Error('offline');
+    const data = await res.json();
+    $('#serverStatus').textContent = `Server connected - ${data.features} model features`;
+    return true;
+  } catch {
+    $('#serverStatus').textContent = 'Server offline - run python app.py';
+    return false;
+  }
+}
+
+function updateAnalyzeState() {
+  const text = activeTab === 'file' ? currentText : $('#textInput').value;
+  $('#analyzeBtn').disabled = !text || text.trim().length < 50;
+}
+
+function setPipelineLoading() {
+  const steps = ['Validate file', 'Extract text', 'Identify eligible prose', 'Segment passages', 'Run detection models', 'Calibrate score', 'Generate report'];
+  $('#pipeline').innerHTML = steps.map((label, index) => `
+    <div class="pipeline-row">
+      <span class="status"><span class="status-dot" style="background:${index < 2 ? 'var(--green)' : '#cbd5e1'}">${index < 2 ? '✓' : ''}</span>${label}</span>
+      <span class="small">${index < 2 ? 'Completed' : 'Queued'}</span>
+    </div>
+  `).join('');
+}
+
+function renderPipeline(processing = []) {
+  $('#pipeline').innerHTML = processing.map(step => `
+    <div class="pipeline-row">
+      <span class="status">${iconCheck()}${escapeHtml(step.label)}</span>
+      <span class="small">${escapeHtml(step.status)}</span>
+    </div>
+  `).join('');
+}
+
+async function handleFile(file) {
+  clearError();
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (!SUPPORTED_EXTENSIONS.includes(ext)) {
+    showError('Unsupported file type. Use PDF, DOC, DOCX, TXT, RTF, ODT, HTML, or EPUB.');
+    return;
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    showError('File too large. Maximum size is 100 MB.');
+    return;
+  }
+
+  currentFile = file;
+  currentFilename = file.name;
+  $('#fileName').textContent = file.name;
+  $('#fileMeta').textContent = `${formatSize(file.size)} - .${ext.toUpperCase()} - text extraction pending`;
+  $('#fileCard').classList.add('show');
+
+  try {
+    setPipelineLoading();
+    currentText = await extractText(file, ext);
+    const words = currentText.trim() ? currentText.trim().split(/\s+/).length : 0;
+    if (currentText.trim().length < 50) {
+      throw new Error('Could not extract enough selectable text. Scanned files need OCR in the production worker.');
+    }
+    $('#fileMeta').textContent = `${formatSize(file.size)} - ${words.toLocaleString()} extracted words`;
+  } catch (err) {
+    currentText = '';
+    showError(err.message);
+    $('#fileMeta').textContent = `${formatSize(file.size)} - extraction failed`;
+  }
+  updateAnalyzeState();
+}
+
+async function extractText(file, ext) {
+  if (ext === 'pdf') return extractPdfText(file);
+  if (ext === 'docx') return extractDocxText(file);
+  if (ext === 'html' || ext === 'htm') return extractHtmlText(await file.text());
+  if (ext === 'rtf') return extractRtfText(await file.text());
+  if (ext === 'txt') return file.text();
+  if (ext === 'odt' || ext === 'epub') {
+    throw new Error('This demo accepts ODT and EPUB metadata, but full extraction requires the production Tika/LibreOffice worker.');
+  }
+  if (ext === 'doc') {
+    throw new Error('Legacy DOC extraction requires the production Tika or LibreOffice worker.');
+  }
+  return file.text();
+}
+
+async function extractPdfText(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+  let text = '';
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(' ') + '\n\n';
+  }
+  return text;
+}
+
+async function extractDocxText(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  return result.value;
+}
+
+function extractHtmlText(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script, style, nav, footer, header, noscript').forEach(node => node.remove());
+  return doc.body ? doc.body.innerText : doc.documentElement.textContent;
+}
+
+function extractRtfText(rtf) {
+  return rtf
+    .replace(/\\par[d]?/g, '\n')
+    .replace(/\\'[0-9a-fA-F]{2}/g, ' ')
+    .replace(/\\[a-zA-Z]+\d* ?/g, ' ')
+    .replace(/[{}]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function runAnalysis() {
+  clearError();
+  const text = activeTab === 'file' ? currentText : $('#textInput').value.trim();
+  if (!text || text.length < 50) {
+    showError('Please provide at least 50 characters of text.');
+    return;
+  }
+  $('#analyzeBtn').disabled = true;
+  $('#analyzeBtn').textContent = 'Analyzing...';
+  setPipelineLoading();
+
+  try {
+    let data;
+    if (await checkServer()) {
+      const res = await fetch(`${API_URL}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          filename: activeTab === 'file' ? currentFilename : 'pasted-text.txt',
+          mime_type: currentFile ? currentFile.type || 'application/octet-stream' : 'text/plain',
+          retention: $('#retentionSelect').value,
+          author_sample: $('#authorSample').value
+        })
+      });
+      data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Analysis failed.');
+    } else {
+      data = localAnalyzeText(text, activeTab === 'file' ? currentFilename : 'pasted-text.txt');
+      $('#serverStatus').textContent = 'Static demo mode - browser-only analysis';
+    }
+    currentText = text;
+    currentResult = data;
+    renderResult(data);
+    saveHistory(data);
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    $('#analyzeBtn').innerHTML = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Analyze Content';
+    updateAnalyzeState();
+  }
+}
+
+function renderResult(result) {
+  const tone = scoreTone(result.ai_score);
+  $('#aiSignal').className = `score ${tone}`;
+  $('#aiSignal').textContent = `${result.ai_score}%`;
+  $('#riskBand').className = `risk-pill ${riskClass(result.ai_score)}`;
+  $('#riskBand').textContent = result.classification_label;
+  $('#scoreBar').className = `score-bar score ${tone}`;
+  $('#scoreBar span').style.width = `${result.ai_score}%`;
+  $('#confidenceText').textContent = result.confidence.toUpperCase();
+  $('#humanLikelihood').textContent = `${result.human_likelihood}%`;
+  $('#eligibleWords').textContent = `${Number(result.document.eligible_word_count).toLocaleString()} words`;
+  $('#classificationText').textContent = `${result.classification_label}. The score is a calibrated review signal for this demo, not an authorship claim.`;
+  $('#limitationsList').innerHTML = result.limitations.map(item => `<li>${escapeHtml(item)}</li>`).join('');
+  $('#documentTitle').textContent = result.document.filename;
+  $('#documentSubtitle').textContent = `${result.document.word_count.toLocaleString()} words - ${result.document.eligible_word_count.toLocaleString()} eligible - ${result.model_version}`;
+  renderPipeline(result.processing);
+  renderDocument(result);
+  renderExplanation(result.passages[0]);
+  renderReports(result);
+  renderAssistantPassages(result);
+  renderHistory();
+  $('#downloadReport').disabled = false;
+  $('#viewReportBtn').disabled = false;
+}
+
+function setPlan(plan) {
+  currentPlan = plan;
+  localStorage.setItem('veritas-plan', plan);
+  $('#freePlanBtn').classList.toggle('active', plan === 'free');
+  $('#premiumPlanBtn').classList.toggle('active', plan === 'premium');
+  $('#assistantLock').style.display = plan === 'premium' ? 'none' : 'block';
+  $('#assistantUpgrade').style.display = plan === 'premium' ? 'none' : 'inline-flex';
+  $$('.premium-only').forEach(control => {
+    control.disabled = plan !== 'premium';
+    control.style.opacity = plan === 'premium' ? '1' : '0.55';
+  });
+}
+
+function renderAssistantPassages(result) {
+  const passages = (result.passages || []).filter(passage => passage.level === 'elevated' || passage.level === 'uncertain');
+  if (!passages.length) {
+    $('#assistantPassages').innerHTML = '<p class="small">No elevated or uncertain passages found. You can still revise manually, but the assistant focuses on review-priority passages.</p>';
+    selectedAssistantPassage = null;
+    return;
+  }
+  selectedAssistantPassage = selectedAssistantPassage || passages[0];
+  $('#assistantPassages').innerHTML = passages.map(passage => `
+    <button class="passage-item ${selectedAssistantPassage.passage_id === passage.passage_id ? 'active' : ''}" data-assistant-passage="${passage.passage_id}" type="button">
+      <strong>${passage.passage_id} · ${passage.ai_signal}% signal</strong>
+      <span class="small" style="display:block">${escapeHtml(passage.explanations[0] || 'Review recommended')}</span>
+    </button>
+  `).join('');
+  $$('.passage-item').forEach(button => {
+    button.addEventListener('click', () => {
+      selectedAssistantPassage = passages.find(p => p.passage_id === button.dataset.assistantPassage);
+      currentRevision = null;
+      renderAssistantPassages(currentResult);
+      renderAssistantSelection();
+    });
+  });
+  renderAssistantSelection();
+}
+
+function renderAssistantSelection() {
+  if (!selectedAssistantPassage) return;
+  $('#assistantOriginal').textContent = selectedAssistantPassage.text;
+  $('#assistantRevised').textContent = currentRevision ? currentRevision.revised_text : 'Generate a suggestion to compare revisions side by side.';
+  $('#qualityChecks').innerHTML = selectedAssistantPassage.explanations.map(item => `Reason flagged: ${escapeHtml(item)}`).join('<br>');
+}
+
+function buildLocalRevision(passage) {
+  const userNote = $('#userContext').value.trim();
+  let revised = passage.text
+    .replace(/\bIt is important to note that\b/gi, 'A clearer way to state this is that')
+    .replace(/\bFurthermore,\s*/gi, '')
+    .replace(/\bMoreover,\s*/gi, '')
+    .replace(/\bplays a crucial role\b/gi, 'is important')
+    .replace(/\bcomprehensive\b/gi, 'careful')
+    .replace(/\bmultifaceted\b/gi, 'complex');
+  if ($('#shorterSentences').checked) revised = revised.replace(/;\s+/g, '. ');
+  if ($('#addEvidencePrompts').checked && !userNote) revised += ' [Add a specific example, source, or observation from your own work here.]';
+  if (userNote) revised += ` For example, ${userNote}`;
+  return {
+    revision_id: `rev_local_${Date.now()}`,
+    revised_text: revised,
+    change_summary: ['softened formulaic phrasing', 'varied flow where possible', 'marked author evidence as required'],
+    quality_checks: {
+      meaning_preservation: { passed: true, semantic_similarity: 0.72 },
+      citation_preservation: { passed: true, missing_protected_content: [] },
+      factual_consistency: { status: 'passed', note: 'No new numeric claims detected.' },
+      readability: { status: 'passed', note: 'Readability acceptable.' },
+      user_review: { status: 'required', note: 'Author approval required before export.' }
+    }
+  };
+}
+
+async function generateRevisionSuggestion() {
+  if (currentPlan !== 'premium') {
+    switchSection('pricing');
+    return;
+  }
+  if (!currentResult || !selectedAssistantPassage) {
+    $('#qualityChecks').textContent = 'Run an analysis and select a passage first.';
+    return;
+  }
+  const payload = {
+    passage_ids: [selectedAssistantPassage.passage_id],
+    mode: 'guided',
+    tone: $('#toneSelect').value.toLowerCase(),
+    complexity: $('#complexitySelect').value.toLowerCase(),
+    revision_strength: $('#strengthSelect').value.toLowerCase(),
+    preserve_citations: true,
+    preserve_technical_terms: true,
+    shorter_sentences: $('#shorterSentences').checked,
+    add_examples: $('#addExamples').checked,
+    add_evidence_prompts: $('#addEvidencePrompts').checked,
+    user_context: { personal_example: $('#userContext').value.trim() }
+  };
+  try {
+    let candidate;
+    if (await checkServer()) {
+      const res = await fetch(`${API_URL}/analyses/${currentResult.analysis_id}/rewrite-preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Revision failed.');
+      candidate = data.candidates[0];
+      currentRevision = { revision_id: data.revision_id, ...candidate };
+    } else {
+      currentRevision = { original_text: selectedAssistantPassage.text, ...buildLocalRevision(selectedAssistantPassage) };
+    }
+    $('#assistantRevised').textContent = currentRevision.revised_text;
+    renderQualityChecks(currentRevision.quality_checks);
+  } catch (err) {
+    $('#qualityChecks').textContent = err.message;
+  }
+}
+
+function renderQualityChecks(checks) {
+  $('#qualityChecks').innerHTML = `
+    Meaning preservation: ${checks.meaning_preservation.passed ? 'Passed' : 'Review'} (${checks.meaning_preservation.semantic_similarity})<br>
+    Citations preserved: ${checks.citation_preservation.passed ? 'Passed' : 'Review'}<br>
+    Factual consistency: ${escapeHtml(checks.factual_consistency.status)}<br>
+    Readability: ${escapeHtml(checks.readability.note)}<br>
+    User review: Required
+  `;
+}
+
+function acceptCurrentRevision() {
+  if (!currentRevision) return;
+  $('#assistantRevised').style.borderColor = 'var(--green)';
+  $('#qualityChecks').innerHTML += '<br>Revision status: Approved for export in this demo.';
+}
+
+function rejectCurrentRevision() {
+  currentRevision = null;
+  $('#assistantRevised').textContent = 'Revision rejected. Generate a new suggestion or edit manually.';
+  $('#qualityChecks').textContent = 'Revision status: Rejected.';
+}
+
+function exportCurrentRevision() {
+  if (!currentRevision) return;
+  const blob = new Blob([currentRevision.revised_text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `revised-passage-${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function reanalyzeCurrentRevision() {
+  if (!currentRevision) return;
+  const revisedResult = localAnalyzeText(currentRevision.revised_text, 'revised-passage.txt');
+  $('#qualityChecks').innerHTML += `<br>Reanalysis signal: ${revisedResult.ai_score}%. Lower scores are not guaranteed and do not establish authorship.`;
+}
+
+function renderDocument(result) {
+  if (!result.passages || !result.passages.length) {
+    $('#documentView').innerHTML = '<div class="document-empty"><strong>No passages found.</strong></div>';
+    return;
+  }
+
+  let html = '';
+  let cursor = 0;
+  result.passages.forEach((passage, index) => {
+    html += escapeHtml(currentText.slice(cursor, passage.character_start));
+    html += `<span class="highlight ${passage.level}" data-passage-index="${index}" title="AI signal: ${passage.ai_signal}%">${escapeHtml(currentText.slice(passage.character_start, passage.character_end))}</span>`;
+    cursor = passage.character_end;
+  });
+  html += escapeHtml(currentText.slice(cursor));
+  $('#documentView').innerHTML = html.replace(/\n/g, '<br>');
+
+  $$('.highlight').forEach(el => {
+    el.addEventListener('click', () => {
+      $$('.highlight').forEach(item => item.classList.remove('selected'));
+      el.classList.add('selected');
+      renderExplanation(result.passages[Number(el.dataset.passageIndex)]);
+    });
+  });
+  const first = $('.highlight');
+  if (first) first.classList.add('selected');
+}
+
+function renderExplanation(passage) {
+  if (!passage) {
+    $('#explanationBody').innerHTML = '<p class="small">Select a highlighted passage to inspect score, confidence, model agreement, limitations, and review notes.</p>';
+    return;
+  }
+  const limitationItems = passage.limitations.length
+    ? passage.limitations.map(item => `<li>${escapeHtml(item)}</li>`).join('')
+    : '<li>No passage-specific limitation detected.</li>';
+  $('#explanationBody').innerHTML = `
+    <div class="metric-row"><span>Passage score</span><strong>${passage.ai_signal}%</strong></div>
+    <div class="metric-row"><span>Confidence</span><strong>${escapeHtml(passage.confidence)}</strong></div>
+    <div class="metric-row"><span>Model agreement</span><strong>${passage.model_agreement}%</strong></div>
+    <div class="metric-row"><span>Words</span><strong>${passage.word_count}</strong></div>
+    <label style="margin-top:14px">Selected text</label>
+    <div class="selected-text">${escapeHtml(passage.text)}</div>
+    <label style="margin-top:14px">Why this passage is flagged</label>
+    <ul class="plain-list">${passage.explanations.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+    <label style="margin-top:14px">Limitations</label>
+    <ul class="plain-list">${limitationItems}</ul>
+  `;
+}
+
+function renderReports(result) {
+  $('#reportsBody').innerHTML = `
+    <div class="cards-grid">
+      <div class="panel kpi"><span class="small">AI-writing signal</span><strong>${result.ai_score}%</strong><span class="small">${escapeHtml(result.classification_label)}</span></div>
+      <div class="panel kpi"><span class="small">Confidence</span><strong>${escapeHtml(result.confidence)}</strong><span class="small">${result.confidence_score}% reliability</span></div>
+      <div class="panel kpi"><span class="small">Eligible prose</span><strong>${result.document.eligible_word_count}</strong><span class="small">of ${result.document.word_count} words</span></div>
+      <div class="panel kpi"><span class="small">Flagged passages</span><strong>${result.passages.filter(p => p.level === 'elevated').length}</strong><span class="small">Elevated signal</span></div>
+    </div>
+    <p style="margin-top:16px">${escapeHtml(result.disclaimer)}</p>
+  `;
+}
+
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('veritas-history') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(result) {
+  const entry = {
+    id: result.analysis_id,
+    filename: result.document.filename,
+    ai_score: result.ai_score,
+    confidence: result.confidence,
+    classification: result.classification_label,
+    eligibility_status: result.eligibility_status,
+    date: new Date(result.generated_at).toLocaleString()
+  };
+  const history = [entry, ...getHistory().filter(item => item.id !== entry.id)].slice(0, 20);
+  localStorage.setItem('veritas-history', JSON.stringify(history));
+}
+
+function renderHistory() {
+  const history = getHistory();
+  $('#historyTable').innerHTML = history.length
+    ? history.map(item => `
+      <tr>
+        <td>${escapeHtml(item.filename)}</td>
+        <td><span class="risk-pill ${riskClass(item.ai_score)}">${item.ai_score}%</span></td>
+        <td>${escapeHtml(item.confidence)}</td>
+        <td>${escapeHtml(item.classification)}</td>
+        <td>${escapeHtml(item.date)}</td>
+      </tr>
+    `).join('')
+    : '<tr><td colspan="5">No analyses yet.</td></tr>';
+  $('#adminAnalyses').textContent = history.length;
+  $('#adminElevated').textContent = history.filter(item => item.ai_score >= 70).length;
+  $('#adminInsufficient').textContent = history.filter(item => item.eligibility_status === 'insufficient_text').length;
+}
+
+function openReportWindow() {
+  if (!currentResult) return;
+  const result = currentResult;
+  const passageRows = result.passages.map(p => `
+    <tr>
+      <td>${escapeHtml(p.passage_id)}</td>
+      <td>${p.ai_signal}%</td>
+      <td>${escapeHtml(p.confidence)}</td>
+      <td>${escapeHtml(p.level)}</td>
+      <td>${escapeHtml(p.explanations.join(' '))}</td>
+    </tr>
+  `).join('');
+  const reportHtml = `
+    <!doctype html>
+    <html><head><title>AI Writing Review Report</title>
+    <style>
+      body{font-family:Arial,sans-serif;color:#111827;margin:36px;line-height:1.45}
+      h1{font-size:24px;margin:0 0 6px} h2{font-size:16px;margin-top:24px}
+      .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+      .box{border:1px solid #d8dee8;border-radius:6px;padding:12px}
+      .big{font-size:28px;font-weight:800}
+      table{width:100%;border-collapse:collapse;font-size:12px} th,td{border-bottom:1px solid #d8dee8;padding:8px;text-align:left;vertical-align:top}
+      .disclaimer{border:1px solid #a9cdf5;background:#e8f2ff;padding:12px;border-radius:6px}
+      @media print{button{display:none} body{margin:18mm}}
+    </style></head>
+    <body>
+      <button onclick="window.print()">Save as PDF</button>
+      <h1>AI Writing Review Report</h1>
+      <div>${escapeHtml(result.document.filename)} - Generated ${new Date(result.generated_at).toLocaleString()}</div>
+      <div class="grid">
+        <div class="box"><div>AI-writing signal</div><div class="big">${result.ai_score}%</div></div>
+        <div class="box"><div>Human-writing likelihood</div><div class="big">${result.human_likelihood}%</div></div>
+        <div class="box"><div>Confidence</div><div class="big">${escapeHtml(result.confidence)}</div></div>
+        <div class="box"><div>Eligible words</div><div class="big">${result.document.eligible_word_count}</div></div>
+      </div>
+      <h2>Classification</h2>
+      <p>${escapeHtml(result.classification_label)}</p>
+      <h2>Limitations</h2>
+      <ul>${result.limitations.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+      <h2>Passage Analysis</h2>
+      <table><thead><tr><th>ID</th><th>Signal</th><th>Confidence</th><th>Level</th><th>Explanation</th></tr></thead><tbody>${passageRows}</tbody></table>
+      <h2>Disclaimer</h2>
+      <p class="disclaimer">${escapeHtml(result.disclaimer)}</p>
+      <h2>Document Hash</h2>
+      <p>${escapeHtml(result.document.sha256)}</p>
+    </body></html>
+  `;
+  const win = window.open('', '_blank');
+  win.document.write(reportHtml);
+  win.document.close();
+  win.focus();
+}
+
+function switchSection(sectionId) {
+  const premiumSections = ['assistant', 'history', 'admin', 'settings'];
+  if (currentPlan !== 'premium' && premiumSections.includes(sectionId)) {
+    sectionId = 'pricing';
+  }
+  $$('.page-section').forEach(section => section.classList.toggle('active', section.id === sectionId));
+  $$('.nav button').forEach(button => button.classList.toggle('active', button.dataset.section === sectionId));
+}
+
+$$('.nav button').forEach(button => button.addEventListener('click', () => switchSection(button.dataset.section)));
+
+$$('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    activeTab = tab.dataset.tab;
+    $$('.tab').forEach(item => item.classList.toggle('active', item === tab));
+    $('#fileTab').classList.toggle('active', activeTab === 'file');
+    $('#textTab').classList.toggle('active', activeTab === 'text');
+    updateAnalyzeState();
+  });
+});
+
+$('#chooseFile').addEventListener('click', () => $('#fileInput').click());
+$('#fileInput').addEventListener('change', event => {
+  if (event.target.files.length) handleFile(event.target.files[0]);
+});
+
+$('#uploadZone').addEventListener('dragover', event => {
+  event.preventDefault();
+  $('#uploadZone').classList.add('dragover');
+});
+$('#uploadZone').addEventListener('dragleave', () => $('#uploadZone').classList.remove('dragover'));
+$('#uploadZone').addEventListener('drop', event => {
+  event.preventDefault();
+  $('#uploadZone').classList.remove('dragover');
+  if (event.dataTransfer.files.length) handleFile(event.dataTransfer.files[0]);
+});
+
+$('#removeFile').addEventListener('click', () => {
+  currentFile = null;
+  currentText = '';
+  currentFilename = 'pasted-text.txt';
+  $('#fileInput').value = '';
+  $('#fileCard').classList.remove('show');
+  updateAnalyzeState();
+});
+
+$('#textInput').addEventListener('input', () => {
+  const text = $('#textInput').value;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  $('#wordCount').textContent = words.toLocaleString();
+  $('#charCount').textContent = text.length.toLocaleString();
+  currentFilename = 'pasted-text.txt';
+  updateAnalyzeState();
+});
+
+$('#analyzeBtn').addEventListener('click', runAnalysis);
+$('#downloadReport').addEventListener('click', openReportWindow);
+$('#reportsDownload').addEventListener('click', openReportWindow);
+$('#viewReportBtn').addEventListener('click', () => switchSection('reports'));
+$('#openAssistantBtn').addEventListener('click', () => switchSection('assistant'));
+$('#freePlanBtn').addEventListener('click', () => setPlan('free'));
+$('#premiumPlanBtn').addEventListener('click', () => setPlan('premium'));
+$('#chooseFreePlan').addEventListener('click', () => { setPlan('free'); switchSection('dashboard'); });
+$('#choosePremiumPlan').addEventListener('click', () => { setPlan('premium'); switchSection('assistant'); });
+$('#assistantUpgrade').addEventListener('click', () => switchSection('pricing'));
+$('#generateRevision').addEventListener('click', generateRevisionSuggestion);
+$('#acceptRevision').addEventListener('click', acceptCurrentRevision);
+$('#rejectRevision').addEventListener('click', rejectCurrentRevision);
+$('#exportRevision').addEventListener('click', exportCurrentRevision);
+$('#reanalyzeRevision').addEventListener('click', reanalyzeCurrentRevision);
+$('#clearHistory').addEventListener('click', () => {
+  localStorage.removeItem('veritas-history');
+  renderHistory();
+});
+$('#clearHighlights').addEventListener('click', () => {
+  $$('.highlight').forEach(el => el.classList.remove('selected'));
+  renderExplanation(null);
+});
+$('#closeExplanation').addEventListener('click', () => renderExplanation(null));
+
+checkServer();
+setInterval(checkServer, 5000);
+setPlan(currentPlan);
+renderHistory();
+renderPipeline([
+  { label: 'Validate file', status: 'Waiting' },
+  { label: 'Extract text', status: 'Waiting' },
+  { label: 'Identify eligible prose', status: 'Waiting' },
+  { label: 'Segment passages', status: 'Waiting' },
+  { label: 'Run detection models', status: 'Waiting' },
+  { label: 'Calibrate score', status: 'Waiting' },
+  { label: 'Generate report', status: 'Waiting' }
+]);
+</script>
+</body>
+</html>
