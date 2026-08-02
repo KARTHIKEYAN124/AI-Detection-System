@@ -8,12 +8,17 @@ authorship or academic misconduct.
 
 from datetime import datetime, timezone
 from hashlib import sha256
+import os
 import pickle
 import re
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import numpy as np
+try:
+    import stripe
+except ImportError:
+    stripe = None
 
 from services.writing_assistant.citation_guard import validate_citations
 from services.writing_assistant.factual_consistency import check_factual_consistency
@@ -43,6 +48,7 @@ except FileNotFoundError:
 SUPPORTED_FORMATS = ["PDF", "DOC", "DOCX", "TXT", "RTF", "ODT", "HTML", "EPUB"]
 MIN_ELIGIBLE_WORDS = 300
 ANALYSIS_CACHE = {}
+STRIPE_API_VERSION = "2026-02-25.clover"
 
 
 def clean_text(text):
@@ -496,6 +502,51 @@ def health():
             "minimum_eligible_words": MIN_ELIGIBLE_WORDS,
         }
     )
+
+
+@app.route("/payments/create-checkout-session", methods=["POST"])
+def create_checkout_session():
+    if stripe is None:
+        return jsonify({"error": "Stripe SDK is not installed. Run pip install -r requirements.txt."}), 500
+
+    secret_key = os.getenv("STRIPE_SECRET_KEY")
+    if not secret_key:
+        return jsonify({"error": "STRIPE_SECRET_KEY is not configured on the server."}), 500
+
+    stripe.api_key = secret_key
+    stripe.api_version = STRIPE_API_VERSION
+
+    data = request.get_json() or {}
+    origin = data.get("origin") or request.headers.get("Origin") or request.host_url.rstrip("/")
+    customer_email = data.get("email") or None
+    price_id = os.getenv("STRIPE_PREMIUM_PRICE_ID")
+
+    line_item = {"quantity": 1}
+    if price_id:
+        line_item["price"] = price_id
+    else:
+        line_item["price_data"] = {
+            "currency": "eur",
+            "unit_amount": 500,
+            "recurring": {"interval": "month"},
+            "product_data": {
+                "name": "Veritas AI Review Premium",
+                "description": "Writing Improvement Assistant, comparison, reanalysis, and export tools.",
+            },
+        }
+
+    try:
+        session = stripe.checkout.Session.create(
+            mode="subscription",
+            customer_email=customer_email,
+            line_items=[line_item],
+            success_url=f"{origin}?payment=success&session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{origin}?payment=cancelled",
+            metadata={"plan": "premium", "product": "ai-detection-system"},
+        )
+        return jsonify({"success": True, "checkout_url": session.url, "session_id": session.id})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 def build_rewrite_response(analysis_id, approve=False):

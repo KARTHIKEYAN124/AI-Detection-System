@@ -978,6 +978,59 @@
     margin: 10px 0;
   }
 
+  .payment-layout {
+    display: grid;
+    grid-template-columns: minmax(360px, 0.9fr) minmax(340px, 0.7fr);
+    gap: 14px;
+  }
+
+  .checkout-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .checkout-total {
+    font-size: 28px;
+    font-weight: 850;
+  }
+
+  .payment-input {
+    width: 100%;
+    height: 42px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0 12px;
+    outline: none;
+  }
+
+  .payment-status {
+    display: none;
+    border-radius: 7px;
+    padding: 11px 12px;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+
+  .payment-status.show {
+    display: block;
+  }
+
+  .payment-status.success {
+    border: 1px solid #9fd9b5;
+    background: var(--green-bg);
+    color: #14532d;
+  }
+
+  .payment-status.warning {
+    border: 1px solid #f3c56d;
+    background: #fff8e8;
+    color: #7c4a03;
+  }
+
   @media (max-width: 1180px) {
     .assistant-grid {
       grid-template-columns: 1fr;
@@ -988,6 +1041,10 @@
     .home-hero {
       grid-template-columns: 1fr;
       min-height: 0;
+    }
+
+    .payment-layout {
+      grid-template-columns: 1fr;
     }
   }
 
@@ -1070,6 +1127,7 @@
       <button data-section="assistant"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Assistant</button>
       <button data-section="history"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v6l4 2"/></svg>History</button>
       <button data-section="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 1 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>Pricing</button>
+      <button data-section="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M7 15h3"/></svg>Payment</button>
       <button data-section="admin"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Admin</button>
       <button data-section="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.05.05a2 2 0 1 1-2.83 2.83l-.05-.05A1.8 1.8 0 0 0 15 19.4a1.8 1.8 0 0 0-1 .6 1.8 1.8 0 0 0-.4 1.2V22a2 2 0 1 1-4 0v-.08a1.8 1.8 0 0 0-.4-1.2 1.8 1.8 0 0 0-1-.6 1.8 1.8 0 0 0-1.98.36l-.05.05a2 2 0 1 1-2.83-2.83l.05-.05A1.8 1.8 0 0 0 4.6 15a1.8 1.8 0 0 0-.6-1 1.8 1.8 0 0 0-1.2-.4H2a2 2 0 1 1 0-4h.08a1.8 1.8 0 0 0 1.2-.4 1.8 1.8 0 0 0 .6-1 1.8 1.8 0 0 0-.36-1.98l-.05-.05a2 2 0 1 1 2.83-2.83l.05.05A1.8 1.8 0 0 0 9 4.6c.3-.12.54-.28.75-.5.32-.33.48-.72.48-1.2V2a2 2 0 1 1 4 0v.08c0 .48.16.87.48 1.2.21.22.45.38.75.5a1.8 1.8 0 0 0 1.98-.36l.05-.05a2 2 0 1 1 2.83 2.83l-.05.05A1.8 1.8 0 0 0 19.4 9c.12.3.28.54.5.75.33.32.72.48 1.2.48H22a2 2 0 1 1 0 4h-.08c-.48 0-.87.16-1.2.48-.22.21-.38.45-.5.75z"/></svg>Settings</button>
     </nav>
@@ -1471,6 +1529,54 @@
         </div>
       </section>
 
+      <section id="payment" class="page-section">
+        <div class="payment-layout">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">Secure Premium Checkout</h2>
+                <p class="small">Subscribe to Premium for €5/month. Card details are handled by Stripe-hosted checkout.</p>
+              </div>
+            </div>
+            <div class="panel-body">
+              <label for="checkoutEmail">Email for receipt and subscription</label>
+              <input id="checkoutEmail" class="payment-input" type="email" placeholder="you@example.com" autocomplete="email">
+              <div id="paymentStatus" class="payment-status"></div>
+              <button id="startCheckoutBtn" class="primary-button" type="button" style="width:100%;height:46px;margin-top:14px">
+                Continue to Stripe Checkout
+              </button>
+              <p class="small" style="margin-top:12px">This app does not store card numbers. A production setup should verify successful subscription events with Stripe webhooks before unlocking Premium server-side.</p>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header"><h2 class="panel-title">Order Summary</h2></div>
+            <div class="panel-body">
+              <div class="checkout-row">
+                <div>
+                  <strong>Premium plan</strong>
+                  <p class="small">Writing assistant, reanalysis comparison, history, exports</p>
+                </div>
+                <strong>€5.00</strong>
+              </div>
+              <div class="checkout-row">
+                <span>Billing</span>
+                <strong>Monthly</strong>
+              </div>
+              <div class="checkout-row">
+                <span>Total due today</span>
+                <span class="checkout-total">€5.00</span>
+              </div>
+              <ul class="plain-list">
+                <li>Hosted Stripe subscription checkout</li>
+                <li>Cancel or manage billing in Stripe Customer Portal after setup</li>
+                <li>Premium unlocks after confirmed payment</li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </section>
+
       <section id="admin" class="page-section">
         <div class="cards-grid">
           <div class="panel kpi"><span class="small">Analyses today</span><strong id="adminAnalyses">0</strong><span class="small">Local browser history</span></div>
@@ -1513,6 +1619,7 @@
 
 <script>
 const API_URL = window.location.origin;
+const STRIPE_PAYMENT_LINK = window.STRIPE_PAYMENT_LINK || localStorage.getItem('stripe-payment-link') || '';
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const SUPPORTED_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'html', 'htm', 'epub'];
 
@@ -1898,6 +2005,57 @@ function setPlan(plan) {
   });
 }
 
+function showPaymentStatus(message, type = 'warning') {
+  $('#paymentStatus').textContent = message;
+  $('#paymentStatus').className = `payment-status show ${type}`;
+}
+
+async function startCheckout() {
+  const email = $('#checkoutEmail').value.trim();
+  $('#startCheckoutBtn').disabled = true;
+  $('#startCheckoutBtn').textContent = 'Opening secure checkout...';
+  try {
+    if (await checkServer()) {
+      const res = await fetch(`${API_URL}/payments/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, origin: window.location.origin + window.location.pathname })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not create checkout session.');
+      window.location.href = data.checkout_url;
+      return;
+    }
+
+    if (STRIPE_PAYMENT_LINK) {
+      const url = new URL(STRIPE_PAYMENT_LINK);
+      if (email) url.searchParams.set('prefilled_email', email);
+      window.location.href = url.toString();
+      return;
+    }
+
+    showPaymentStatus('Payment is ready in the app, but no live Stripe link is configured on this static deployment. Add a Stripe Payment Link as window.STRIPE_PAYMENT_LINK, or run the Flask backend with STRIPE_SECRET_KEY configured.', 'warning');
+  } catch (err) {
+    showPaymentStatus(err.message, 'warning');
+  } finally {
+    $('#startCheckoutBtn').disabled = false;
+    $('#startCheckoutBtn').textContent = 'Continue to Stripe Checkout';
+  }
+}
+
+function handlePaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('payment');
+  if (status === 'success') {
+    setPlan('premium');
+    switchSection('assistant');
+    showPaymentStatus('Payment succeeded. Premium is enabled in this browser session.', 'success');
+  } else if (status === 'cancelled') {
+    switchSection('payment');
+    showPaymentStatus('Checkout was cancelled. No payment was taken.', 'warning');
+  }
+}
+
 function renderAssistantPassages(result) {
   const passages = (result.passages || []).filter(passage => passage.level === 'elevated' || passage.level === 'uncertain');
   if (!passages.length) {
@@ -2196,7 +2354,7 @@ function openReportWindow() {
 function switchSection(sectionId) {
   const premiumSections = ['assistant', 'history', 'admin', 'settings'];
   if (currentPlan !== 'premium' && premiumSections.includes(sectionId)) {
-    sectionId = 'pricing';
+    sectionId = 'payment';
   }
   $$('.page-section').forEach(section => section.classList.toggle('active', section.id === sectionId));
   $$('.nav button').forEach(button => button.classList.toggle('active', button.dataset.section === sectionId));
@@ -2254,10 +2412,11 @@ $('#reportsDownload').addEventListener('click', openReportWindow);
 $('#viewReportBtn').addEventListener('click', () => switchSection('reports'));
 $('#openAssistantBtn').addEventListener('click', () => switchSection('assistant'));
 $('#freePlanBtn').addEventListener('click', () => setPlan('free'));
-$('#premiumPlanBtn').addEventListener('click', () => setPlan('premium'));
+$('#premiumPlanBtn').addEventListener('click', () => switchSection('payment'));
 $('#chooseFreePlan').addEventListener('click', () => { setPlan('free'); switchSection('dashboard'); });
-$('#choosePremiumPlan').addEventListener('click', () => { setPlan('premium'); switchSection('assistant'); });
-$('#assistantUpgrade').addEventListener('click', () => switchSection('pricing'));
+$('#choosePremiumPlan').addEventListener('click', () => switchSection('payment'));
+$('#assistantUpgrade').addEventListener('click', () => switchSection('payment'));
+$('#startCheckoutBtn').addEventListener('click', startCheckout);
 $('#generateRevision').addEventListener('click', generateRevisionSuggestion);
 $('#acceptRevision').addEventListener('click', acceptCurrentRevision);
 $('#rejectRevision').addEventListener('click', rejectCurrentRevision);
@@ -2276,6 +2435,7 @@ $('#closeExplanation').addEventListener('click', () => renderExplanation(null));
 checkServer();
 setInterval(checkServer, 5000);
 setPlan(currentPlan);
+handlePaymentReturn();
 renderHistory();
 renderPipeline([
   { label: 'Validate file', status: 'Waiting' },
