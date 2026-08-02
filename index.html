@@ -212,6 +212,13 @@
     font-size: 12px;
   }
 
+  .sidebar-footer {
+    margin-top: auto;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
   .content {
     padding: 18px;
     display: grid;
@@ -865,6 +872,94 @@
     gap: 14px;
   }
 
+  .home-hero {
+    min-height: calc(100vh - 100px);
+    display: grid;
+    grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+    gap: 22px;
+    align-items: center;
+  }
+
+  .home-title {
+    font-size: clamp(36px, 5vw, 62px);
+    line-height: 1;
+    margin: 0 0 18px;
+    letter-spacing: 0;
+  }
+
+  .home-copy {
+    font-size: 17px;
+    color: #475467;
+    max-width: 680px;
+    margin: 0 0 24px;
+  }
+
+  .home-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .home-preview {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .home-preview-bar {
+    height: 46px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    color: #475467;
+    font-size: 12px;
+    font-weight: 760;
+  }
+
+  .home-preview-body {
+    padding: 18px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .home-result {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 18px;
+    align-items: center;
+  }
+
+  .home-score {
+    width: 132px;
+    height: 132px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    border: 12px solid var(--amber-bg);
+    color: var(--amber);
+    font-size: 34px;
+    font-weight: 850;
+  }
+
+  .home-lines {
+    display: grid;
+    gap: 9px;
+  }
+
+  .home-line {
+    height: 14px;
+    border-radius: 4px;
+    background: #e8edf3;
+  }
+
+  .home-line.low { background: var(--green-bg); }
+  .home-line.mid { background: var(--amber-bg); }
+  .home-line.high { background: var(--red-bg); }
+
   .price-card {
     padding: 20px;
     border: 1px solid var(--line);
@@ -886,6 +981,13 @@
   @media (max-width: 1180px) {
     .assistant-grid {
       grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 980px) {
+    .home-hero {
+      grid-template-columns: 1fr;
+      min-height: 0;
     }
   }
 
@@ -961,7 +1063,8 @@
     </div>
 
     <nav class="nav" aria-label="Main navigation">
-      <button class="active" data-section="dashboard"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</button>
+      <button class="active" data-section="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>Home</button>
+      <button data-section="dashboard"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</button>
       <button data-section="upload"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v4H4v-4"/></svg>Upload</button>
       <button data-section="reports"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>Reports</button>
       <button data-section="assistant"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Assistant</button>
@@ -971,11 +1074,9 @@
       <button data-section="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.05.05a2 2 0 1 1-2.83 2.83l-.05-.05A1.8 1.8 0 0 0 15 19.4a1.8 1.8 0 0 0-1 .6 1.8 1.8 0 0 0-.4 1.2V22a2 2 0 1 1-4 0v-.08a1.8 1.8 0 0 0-.4-1.2 1.8 1.8 0 0 0-1-.6 1.8 1.8 0 0 0-1.98.36l-.05.05a2 2 0 1 1-2.83-2.83l.05-.05A1.8 1.8 0 0 0 4.6 15a1.8 1.8 0 0 0-.6-1 1.8 1.8 0 0 0-1.2-.4H2a2 2 0 1 1 0-4h.08a1.8 1.8 0 0 0 1.2-.4 1.8 1.8 0 0 0 .6-1 1.8 1.8 0 0 0-.36-1.98l-.05-.05a2 2 0 1 1 2.83-2.83l.05.05A1.8 1.8 0 0 0 9 4.6c.3-.12.54-.28.75-.5.32-.33.48-.72.48-1.2V2a2 2 0 1 1 4 0v.08c0 .48.16.87.48 1.2.21.22.45.38.75.5a1.8 1.8 0 0 0 1.98-.36l.05-.05a2 2 0 1 1 2.83 2.83l-.05.05A1.8 1.8 0 0 0 19.4 9c.12.3.28.54.5.75.33.32.72.48 1.2.48H22a2 2 0 1 1 0 4h-.08c-.48 0-.87.16-1.2.48-.22.21-.38.45-.5.75z"/></svg>Settings</button>
     </nav>
 
-    <div class="usage">
-      <div>Usage this month</div>
-      <div class="meter"><span></span></div>
-      <div>1,248 / 5,000 pages scanned</div>
-      <p>Demo model v1.0<br>Local portfolio build</p>
+    <div class="sidebar-footer">
+      <p>AI writing analysis with uncertainty-aware reporting.</p>
+      <p>Free detection report<br>Premium writing tools €5/month</p>
     </div>
   </aside>
 
@@ -990,13 +1091,53 @@
           <button id="freePlanBtn" type="button">Free</button>
           <button id="premiumPlanBtn" type="button">Premium €5</button>
         </div>
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.82 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
-        <div><strong>Dr. Elena Morris</strong><span>Institution Admin</span></div>
       </div>
     </header>
 
     <div class="content">
-      <section id="dashboard" class="page-section active">
+      <section id="home" class="page-section active">
+        <div class="home-hero">
+          <div>
+            <h1 class="home-title">AI writing analysis with responsible revision tools.</h1>
+            <p class="home-copy">Upload or paste writing, review AI-writing signals with uncertainty, inspect highlighted passages, and improve clarity through guided author-owned revisions.</p>
+            <div class="home-actions">
+              <button class="primary-button" type="button" onclick="switchSection('dashboard')">Start free detection</button>
+              <button class="outline-button" type="button" onclick="switchSection('pricing')">View plans</button>
+            </div>
+            <div class="cards-grid" style="margin-top:18px">
+              <div class="panel kpi"><span class="small">Free</span><strong>Report</strong><span class="small">Detection score, confidence, limitations</span></div>
+              <div class="panel kpi"><span class="small">Premium</span><strong>€5</strong><span class="small">Assistant, comparison, reanalysis, exports</span></div>
+              <div class="panel kpi"><span class="small">Safety</span><strong>Review</strong><span class="small">No authorship claims or misconduct labels</span></div>
+              <div class="panel kpi"><span class="small">Formats</span><strong>8</strong><span class="small">PDF, DOCX, TXT, RTF, ODT, HTML, EPUB</span></div>
+            </div>
+          </div>
+          <div class="home-preview" aria-label="Product preview">
+            <div class="home-preview-bar">
+              <span>Detection report preview</span>
+              <span>Confidence: moderate</span>
+            </div>
+            <div class="home-preview-body">
+              <div class="home-result">
+                <div class="home-score">46%</div>
+                <div>
+                  <h2 class="panel-title">Mixed or inconclusive evidence</h2>
+                  <p class="small">The report identifies statistical writing patterns for human review. It does not prove authorship or misconduct.</p>
+                </div>
+              </div>
+              <div class="home-lines">
+                <div class="home-line low" style="width:92%"></div>
+                <div class="home-line" style="width:78%"></div>
+                <div class="home-line mid" style="width:86%"></div>
+                <div class="home-line" style="width:64%"></div>
+                <div class="home-line high" style="width:72%"></div>
+                <div class="home-line" style="width:88%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="page-section">
         <div class="workspace">
           <section class="panel">
             <div class="tabs">
