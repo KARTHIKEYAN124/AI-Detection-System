@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Veritas AI Review - AI Writing Analysis Platform</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
@@ -83,6 +84,11 @@
     color: #d7fff8;
     font-weight: 800;
     letter-spacing: 0;
+  }
+
+  .brand-mark svg {
+    width: 27px;
+    height: 27px;
   }
 
   .brand h1 {
@@ -1149,7 +1155,13 @@
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark">V</div>
+      <div class="brand-mark" aria-label="Veritas AI Review logo">
+        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <path d="M32 10 50 18v13c0 11.8-7.3 18.6-18 23-10.7-4.4-18-11.2-18-23V18l18-8Z" fill="#e7fffb" opacity=".14"/>
+          <path d="M32 14 46 20v10.3c0 8.8-5.4 14.5-14 18.2-8.6-3.7-14-9.4-14-18.2V20l14-6Z" stroke="#7ee7dc" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M25 32.5 30.2 38 40 26" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <div>
         <h1>Veritas <span>AI Review</span></h1>
       </div>
@@ -1705,6 +1717,9 @@
           <div class="panel kpi"><span class="small">Elevated reports</span><strong id="adminElevated">0</strong><span class="small">Review priority</span></div>
           <div class="panel kpi"><span class="small">Insufficient text</span><strong id="adminInsufficient">0</strong><span class="small">Input quality issue</span></div>
           <div class="panel kpi"><span class="small">Registered users</span><strong id="adminUsers">0</strong><span class="small">Local demo accounts</span></div>
+          <div class="panel kpi"><span class="small">Page views</span><strong id="trafficViews">0</strong><span class="small">Backend traffic events</span></div>
+          <div class="panel kpi"><span class="small">Visitors</span><strong id="trafficVisitors">0</strong><span class="small">Estimated unique browsers</span></div>
+          <div class="panel kpi"><span class="small">Last visit</span><strong id="trafficLast" style="font-size:15px">--</strong><span class="small">Latest page view</span></div>
         </div>
         <div class="panel admin-table">
           <div class="panel-header"><h2 class="panel-title">User Usage</h2></div>
@@ -1763,6 +1778,7 @@ let currentFilename = 'pasted-text.txt';
 let currentPlan = localStorage.getItem('veritas-plan') || 'free';
 let currentUser = JSON.parse(localStorage.getItem('veritas-current-user') || 'null');
 let authToken = localStorage.getItem('veritas-auth-token') || '';
+let visitorId = localStorage.getItem('veritas-visitor-id') || '';
 let selectedAssistantPassage = null;
 let currentRevision = null;
 
@@ -2161,6 +2177,28 @@ function authHeaders(extra = {}) {
   return authToken ? { ...extra, Authorization: `Bearer ${authToken}` } : extra;
 }
 
+function ensureVisitorId() {
+  if (!visitorId) {
+    visitorId = `vis_${Math.random().toString(36).slice(2)}_${Date.now()}`;
+    localStorage.setItem('veritas-visitor-id', visitorId);
+  }
+  return visitorId;
+}
+
+async function logPageView() {
+  ensureVisitorId();
+  if (!(await checkServer())) return;
+  fetch(`${API_URL}/traffic/pageview`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      path: window.location.pathname + window.location.search,
+      referrer: document.referrer,
+      visitor_id: visitorId
+    })
+  }).catch(() => {});
+}
+
 function saveUsers(users) {
   localStorage.setItem('veritas-users', JSON.stringify(users));
 }
@@ -2351,6 +2389,7 @@ function incrementUsage(kind) {
 function renderUsageTable() {
   const users = getUsers();
   const history = getHistory();
+  const localViews = Number(localStorage.getItem('veritas-local-pageviews') || 0);
   $('#adminUsers').textContent = users.length;
   $('#usageTable').innerHTML = users.length ? users.map(user => `
     <tr>
@@ -2365,6 +2404,9 @@ function renderUsageTable() {
   $('#adminAnalyses').textContent = history.length;
   $('#adminElevated').textContent = history.filter(item => item.ai_score >= 70).length;
   $('#adminInsufficient').textContent = history.filter(item => item.eligibility_status === 'insufficient_text').length;
+  $('#trafficViews').textContent = localViews.toLocaleString();
+  $('#trafficVisitors').textContent = localViews ? '1' : '0';
+  $('#trafficLast').textContent = localStorage.getItem('veritas-local-last-pageview') || '--';
 }
 
 async function refreshServerUsage() {
@@ -2388,6 +2430,9 @@ async function refreshServerUsage() {
     $('#adminAnalyses').textContent = Number(totals.scan_completed || 0).toLocaleString();
     $('#adminElevated').textContent = Number(totals.payment_checkout_started || 0).toLocaleString();
     $('#adminInsufficient').textContent = Number(totals.report_downloaded || 0).toLocaleString();
+    $('#trafficViews').textContent = Number(data.traffic.page_views || 0).toLocaleString();
+    $('#trafficVisitors').textContent = Number(data.traffic.unique_visitors || 0).toLocaleString();
+    $('#trafficLast').textContent = data.traffic.last_pageview ? new Date(data.traffic.last_pageview).toLocaleString() : '--';
     return true;
   } catch {
     return false;
@@ -2839,6 +2884,9 @@ $('#closeExplanation').addEventListener('click', () => renderExplanation(null));
 
 checkServer();
 setInterval(checkServer, 5000);
+localStorage.setItem('veritas-local-pageviews', String(Number(localStorage.getItem('veritas-local-pageviews') || 0) + 1));
+localStorage.setItem('veritas-local-last-pageview', new Date().toLocaleString());
+logPageView();
 seedDemoAdmin();
 setPlan(currentPlan);
 renderAccountState();

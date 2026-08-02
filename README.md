@@ -102,3 +102,37 @@ For a larger production deployment, move the same schema to PostgreSQL and track
 - `metadata`
 
 Admin pages should read usage through protected backend endpoints and require a verified admin role on the server, not only in the browser.
+
+## Checking Website Traffic
+
+In the Flask backend, page views are logged through:
+
+```http
+POST /traffic/pageview
+```
+
+Admins can view traffic in the Admin page or query:
+
+```http
+GET /admin/usage
+Authorization: Bearer <admin-session-token>
+```
+
+The response includes:
+
+- total page views
+- estimated unique visitors
+- latest page view time
+- usage events by type
+
+On the static live demo, traffic counters use browser-local fallback data. For real public analytics across all visitors, connect a production backend, Cloudflare Web Analytics, Plausible, Google Analytics, or another analytics provider.
+
+## Clean Domain
+
+The current hosted URL is a generated deployment domain. To remove the `s-karthikeyan5401.chatgpt.site` part, attach a custom domain you own, such as:
+
+```text
+www.yourdomain.com
+```
+
+After you provide the domain name, add it in the Sites deployment and create the required DNS records at your domain registrar.

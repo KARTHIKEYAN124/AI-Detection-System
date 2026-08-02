@@ -563,11 +563,27 @@ def admin_usage():
             ORDER BY count DESC
             """
         ).fetchall()
+        pageviews = conn.execute(
+            "SELECT metadata, created_at FROM usage_records WHERE event_type = 'page_view' ORDER BY created_at DESC"
+        ).fetchall()
+    visitor_ids = set()
+    last_pageview = None
+    for row in pageviews:
+        last_pageview = last_pageview or row["created_at"]
+        metadata = row["metadata"] or ""
+        for part in metadata.split(";"):
+            if part.startswith("visitor_id=") and part.removeprefix("visitor_id="):
+                visitor_ids.add(part.removeprefix("visitor_id="))
     return jsonify(
         {
             "success": True,
             "users": [dict(row) for row in rows],
             "totals": [dict(row) for row in totals],
+            "traffic": {
+                "page_views": len(pageviews),
+                "unique_visitors": len(visitor_ids),
+                "last_pageview": last_pageview,
+            },
         }
     )
 
@@ -579,6 +595,20 @@ def report_downloaded(analysis_id):
         "report_downloaded",
         document_id=analysis["document_id"] if analysis else None,
         analysis_id=analysis_id,
+    )
+    return jsonify({"success": True})
+
+
+@app.route("/traffic/pageview", methods=["POST"])
+def traffic_pageview():
+    data = request.get_json() or {}
+    log_usage(
+        "page_view",
+        metadata=(
+            f"path={data.get('path', '/')};"
+            f"visitor_id={data.get('visitor_id', '')};"
+            f"referrer={data.get('referrer', '')}"
+        ),
     )
     return jsonify({"success": True})
 
