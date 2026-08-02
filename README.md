@@ -54,3 +54,29 @@ GitHub Pages is configured through `.github/workflows/pages.yml`.
 ## Responsible Use
 
 This app reports statistical writing-pattern signals for human review. It does not prove authorship or academic misconduct. The writing assistant improves clarity and evidence while preserving meaning; it is not designed or marketed to bypass AI detectors.
+
+## Checking User Usage
+
+In this static MVP:
+
+1. Open the website.
+2. Go to `Login`.
+3. Use the demo admin account:
+   - Email: `admin@veritas.local`
+   - Password: `admin123`
+4. Open `Admin`.
+5. Review the `User Usage` table for scans, report downloads, plan, role, and last active time.
+
+This usage data is stored in browser `localStorage`, so it is only for demo/testing on one browser.
+
+For production, track usage server-side in a database table such as `usage_records` with:
+
+- `user_id`
+- `organization_id`
+- `event_type` such as `scan_started`, `report_downloaded`, `premium_checkout_completed`
+- `document_id`
+- `analysis_id`
+- `created_at`
+- `metadata`
+
+Admin pages should read usage through protected backend endpoints and require a verified admin role on the server, not only in the browser.

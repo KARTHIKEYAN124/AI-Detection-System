@@ -1031,6 +1031,42 @@
     color: #7c4a03;
   }
 
+  .auth-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .auth-form {
+    display: grid;
+    gap: 11px;
+  }
+
+  .role-pill {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    border-radius: 6px;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 800;
+    background: #e8f2ff;
+    color: var(--blue);
+  }
+
+  .admin-lock {
+    border: 1px solid #f3c56d;
+    background: #fff8e8;
+    color: #7c4a03;
+    border-radius: 7px;
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+
+  .usage-table-wrap {
+    overflow: auto;
+  }
+
   @media (max-width: 1180px) {
     .assistant-grid {
       grid-template-columns: 1fr;
@@ -1121,6 +1157,8 @@
 
     <nav class="nav" aria-label="Main navigation">
       <button class="active" data-section="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>Home</button>
+      <button data-section="login"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>Login</button>
+      <button data-section="register"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>Create Account</button>
       <button data-section="dashboard"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</button>
       <button data-section="upload"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v4H4v-4"/></svg>Upload</button>
       <button data-section="reports"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>Reports</button>
@@ -1149,6 +1187,8 @@
           <button id="freePlanBtn" type="button">Free</button>
           <button id="premiumPlanBtn" type="button">Premium €5</button>
         </div>
+        <span id="accountBadge" class="role-pill">Guest</span>
+        <button id="logoutBtn" class="ghost-button" type="button" style="display:none">Logout</button>
       </div>
     </header>
 
@@ -1159,8 +1199,11 @@
             <h1 class="home-title">AI writing analysis with responsible revision tools.</h1>
             <p class="home-copy">Upload or paste writing, review AI-writing signals with uncertainty, inspect highlighted passages, and improve clarity through guided author-owned revisions.</p>
             <div class="home-actions">
+              <button class="outline-button" type="button" onclick="switchSection('register')">Create account</button>
+              <button class="outline-button" type="button" onclick="switchSection('login')">Login</button>
               <button class="primary-button" type="button" onclick="switchSection('dashboard')">Start free detection</button>
               <button class="outline-button" type="button" onclick="switchSection('pricing')">View plans</button>
+              <button class="outline-button" type="button" onclick="switchSection('admin')">Admin</button>
             </div>
             <div class="cards-grid" style="margin-top:18px">
               <div class="panel kpi"><span class="small">Free</span><strong>Report</strong><span class="small">Detection score, confidence, limitations</span></div>
@@ -1192,6 +1235,81 @@
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="register" class="page-section">
+        <div class="auth-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Create Account</h2>
+            </div>
+            <div class="panel-body">
+              <form id="registerForm" class="auth-form">
+                <div>
+                  <label for="registerName">Full name</label>
+                  <input id="registerName" class="payment-input" type="text" placeholder="Your name" required>
+                </div>
+                <div>
+                  <label for="registerEmail">Email</label>
+                  <input id="registerEmail" class="payment-input" type="email" placeholder="you@example.com" required>
+                </div>
+                <div>
+                  <label for="registerPassword">Password</label>
+                  <input id="registerPassword" class="payment-input" type="password" placeholder="Create a password" required>
+                </div>
+                <button class="primary-button" type="submit">Create account</button>
+              </form>
+              <div id="registerStatus" class="payment-status"></div>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-header"><h2 class="panel-title">Account Access</h2></div>
+            <div class="panel-body">
+              <p>Registered users can keep local scan history, download reports, and upgrade to Premium.</p>
+              <ul class="plain-list">
+                <li>Free users: detection report only</li>
+                <li>Premium users: all writing assistant features</li>
+                <li>Admins: usage monitoring and operational controls</li>
+              </ul>
+              <button class="outline-button" type="button" onclick="switchSection('login')" style="margin-top:14px">Already have an account?</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="login" class="page-section">
+        <div class="auth-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Login</h2>
+            </div>
+            <div class="panel-body">
+              <form id="loginForm" class="auth-form">
+                <div>
+                  <label for="loginEmail">Email</label>
+                  <input id="loginEmail" class="payment-input" type="email" placeholder="you@example.com" required>
+                </div>
+                <div>
+                  <label for="loginPassword">Password</label>
+                  <input id="loginPassword" class="payment-input" type="password" placeholder="Password" required>
+                </div>
+                <button class="primary-button" type="submit">Login</button>
+              </form>
+              <div id="loginStatus" class="payment-status"></div>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-header"><h2 class="panel-title">Demo Admin Access</h2></div>
+            <div class="panel-body">
+              <p class="small">For this static MVP only. Production admin access must use server-side authentication and role checks.</p>
+              <div class="selected-text">
+                Email: admin@veritas.local<br>
+                Password: admin123
+              </div>
+              <button id="demoAdminLogin" class="outline-button" type="button" style="margin-top:14px">Login as demo admin</button>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -1578,11 +1696,24 @@
       </section>
 
       <section id="admin" class="page-section">
+        <div id="adminLock" class="admin-lock">
+          Admin access required. Login with an admin account to view usage monitoring and operational controls.
+        </div>
+        <div id="adminContent">
         <div class="cards-grid">
           <div class="panel kpi"><span class="small">Analyses today</span><strong id="adminAnalyses">0</strong><span class="small">Local browser history</span></div>
           <div class="panel kpi"><span class="small">Elevated reports</span><strong id="adminElevated">0</strong><span class="small">Review priority</span></div>
           <div class="panel kpi"><span class="small">Insufficient text</span><strong id="adminInsufficient">0</strong><span class="small">Input quality issue</span></div>
-          <div class="panel kpi"><span class="small">Model version</span><strong>v1</strong><span class="small">TF-IDF demo</span></div>
+          <div class="panel kpi"><span class="small">Registered users</span><strong id="adminUsers">0</strong><span class="small">Local demo accounts</span></div>
+        </div>
+        <div class="panel admin-table">
+          <div class="panel-header"><h2 class="panel-title">User Usage</h2></div>
+          <div class="panel-body usage-table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Role</th><th>Plan</th><th>Scans</th><th>Reports</th><th>Last active</th></tr></thead>
+              <tbody id="usageTable"></tbody>
+            </table>
+          </div>
         </div>
         <div class="panel admin-table">
           <div class="panel-header"><h2 class="panel-title">Operational Monitoring</h2></div>
@@ -1597,6 +1728,7 @@
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </section>
 
@@ -1629,6 +1761,7 @@ let currentText = '';
 let currentResult = null;
 let currentFilename = 'pasted-text.txt';
 let currentPlan = localStorage.getItem('veritas-plan') || 'free';
+let currentUser = JSON.parse(localStorage.getItem('veritas-current-user') || 'null');
 let selectedAssistantPassage = null;
 let currentRevision = null;
 
@@ -1959,6 +2092,7 @@ async function runAnalysis() {
     currentResult = data;
     renderResult(data);
     saveHistory(data);
+    incrementUsage('scan');
   } catch (err) {
     showError(err.message);
   } finally {
@@ -1995,6 +2129,11 @@ function renderResult(result) {
 function setPlan(plan) {
   currentPlan = plan;
   localStorage.setItem('veritas-plan', plan);
+  if (currentUser) {
+    currentUser = { ...currentUser, plan };
+    localStorage.setItem('veritas-current-user', JSON.stringify(currentUser));
+    saveUsers(getUsers().map(user => user.email === currentUser.email ? currentUser : user));
+  }
   $('#freePlanBtn').classList.toggle('active', plan === 'free');
   $('#premiumPlanBtn').classList.toggle('active', plan === 'premium');
   $('#assistantLock').style.display = plan === 'premium' ? 'none' : 'block';
@@ -2003,6 +2142,170 @@ function setPlan(plan) {
     control.disabled = plan !== 'premium';
     control.style.opacity = plan === 'premium' ? '1' : '0.55';
   });
+}
+
+function getUsers() {
+  try {
+    return JSON.parse(localStorage.getItem('veritas-users') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveUsers(users) {
+  localStorage.setItem('veritas-users', JSON.stringify(users));
+}
+
+function seedDemoAdmin() {
+  const users = getUsers();
+  if (!users.some(user => user.email === 'admin@veritas.local')) {
+    users.push({
+      name: 'Demo Admin',
+      email: 'admin@veritas.local',
+      password: 'admin123',
+      role: 'admin',
+      plan: 'premium',
+      scans: 0,
+      reports: 0,
+      createdAt: new Date().toISOString(),
+      lastActive: null
+    });
+    saveUsers(users);
+  }
+}
+
+function setCurrentUser(user) {
+  currentUser = user;
+  if (user) {
+    localStorage.setItem('veritas-current-user', JSON.stringify(user));
+    setPlan(user.plan || currentPlan);
+  } else {
+    localStorage.removeItem('veritas-current-user');
+  }
+  renderAccountState();
+}
+
+function renderAccountState() {
+  const badge = $('#accountBadge');
+  const logout = $('#logoutBtn');
+  if (!currentUser) {
+    badge.textContent = 'Guest';
+    logout.style.display = 'none';
+  } else {
+    badge.textContent = `${currentUser.name || currentUser.email} · ${currentUser.role}`;
+    logout.style.display = 'inline-flex';
+  }
+  renderAdminAccess();
+}
+
+function isAdmin() {
+  return currentUser && currentUser.role === 'admin';
+}
+
+function renderAdminAccess() {
+  const lock = $('#adminLock');
+  const content = $('#adminContent');
+  if (!lock || !content) return;
+  lock.style.display = isAdmin() ? 'none' : 'block';
+  content.style.display = isAdmin() ? 'block' : 'none';
+  if (isAdmin()) renderUsageTable();
+}
+
+function registerUser(event) {
+  event.preventDefault();
+  const users = getUsers();
+  const email = $('#registerEmail').value.trim().toLowerCase();
+  if (users.some(user => user.email === email)) {
+    showInlineStatus('#registerStatus', 'An account with this email already exists.', 'warning');
+    return;
+  }
+  const user = {
+    name: $('#registerName').value.trim() || email,
+    email,
+    password: $('#registerPassword').value,
+    role: 'user',
+    plan: 'free',
+    scans: 0,
+    reports: 0,
+    createdAt: new Date().toISOString(),
+    lastActive: new Date().toISOString()
+  };
+  users.push(user);
+  saveUsers(users);
+  setCurrentUser(user);
+  showInlineStatus('#registerStatus', 'Account created. You are logged in on the Free plan.', 'success');
+  switchSection('dashboard');
+}
+
+function loginUser(event) {
+  event.preventDefault();
+  const email = $('#loginEmail').value.trim().toLowerCase();
+  const password = $('#loginPassword').value;
+  const user = getUsers().find(item => item.email === email && item.password === password);
+  if (!user) {
+    showInlineStatus('#loginStatus', 'Invalid email or password.', 'warning');
+    return;
+  }
+  user.lastActive = new Date().toISOString();
+  saveUsers(getUsers().map(item => item.email === user.email ? user : item));
+  setCurrentUser(user);
+  showInlineStatus('#loginStatus', `Logged in as ${user.role}.`, 'success');
+  switchSection(user.role === 'admin' ? 'admin' : 'dashboard');
+}
+
+function loginDemoAdmin() {
+  seedDemoAdmin();
+  const user = getUsers().find(item => item.email === 'admin@veritas.local');
+  user.lastActive = new Date().toISOString();
+  saveUsers(getUsers().map(item => item.email === user.email ? user : item));
+  setCurrentUser(user);
+  switchSection('admin');
+}
+
+function logoutUser() {
+  setCurrentUser(null);
+  switchSection('home');
+}
+
+function showInlineStatus(selector, message, type = 'warning') {
+  const el = $(selector);
+  el.textContent = message;
+  el.className = `payment-status show ${type}`;
+}
+
+function incrementUsage(kind) {
+  if (!currentUser) return;
+  const users = getUsers();
+  const updated = users.map(user => {
+    if (user.email !== currentUser.email) return user;
+    const next = { ...user, lastActive: new Date().toISOString() };
+    if (kind === 'scan') next.scans = (next.scans || 0) + 1;
+    if (kind === 'report') next.reports = (next.reports || 0) + 1;
+    currentUser = next;
+    localStorage.setItem('veritas-current-user', JSON.stringify(next));
+    return next;
+  });
+  saveUsers(updated);
+  renderUsageTable();
+}
+
+function renderUsageTable() {
+  const users = getUsers();
+  const history = getHistory();
+  $('#adminUsers').textContent = users.length;
+  $('#usageTable').innerHTML = users.length ? users.map(user => `
+    <tr>
+      <td>${escapeHtml(user.email)}</td>
+      <td>${escapeHtml(user.role)}</td>
+      <td>${escapeHtml(user.plan || 'free')}</td>
+      <td>${Number(user.scans || 0).toLocaleString()}</td>
+      <td>${Number(user.reports || 0).toLocaleString()}</td>
+      <td>${user.lastActive ? new Date(user.lastActive).toLocaleString() : 'Never'}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="6">No registered users yet.</td></tr>';
+  $('#adminAnalyses').textContent = history.length;
+  $('#adminElevated').textContent = history.filter(item => item.ai_score >= 70).length;
+  $('#adminInsufficient').textContent = history.filter(item => item.eligibility_status === 'insufficient_text').length;
 }
 
 function showPaymentStatus(message, type = 'warning') {
@@ -2300,6 +2603,7 @@ function renderHistory() {
 
 function openReportWindow() {
   if (!currentResult) return;
+  incrementUsage('report');
   const result = currentResult;
   const passageRows = result.passages.map(p => `
     <tr>
@@ -2352,7 +2656,11 @@ function openReportWindow() {
 }
 
 function switchSection(sectionId) {
-  const premiumSections = ['assistant', 'history', 'admin', 'settings'];
+  if (sectionId === 'admin' && !isAdmin()) {
+    sectionId = 'login';
+    showInlineStatus('#loginStatus', 'Admin access required. Use an admin account to continue.', 'warning');
+  }
+  const premiumSections = ['assistant', 'history', 'settings'];
   if (currentPlan !== 'premium' && premiumSections.includes(sectionId)) {
     sectionId = 'payment';
   }
@@ -2422,6 +2730,10 @@ $('#acceptRevision').addEventListener('click', acceptCurrentRevision);
 $('#rejectRevision').addEventListener('click', rejectCurrentRevision);
 $('#exportRevision').addEventListener('click', exportCurrentRevision);
 $('#reanalyzeRevision').addEventListener('click', reanalyzeCurrentRevision);
+$('#registerForm').addEventListener('submit', registerUser);
+$('#loginForm').addEventListener('submit', loginUser);
+$('#demoAdminLogin').addEventListener('click', loginDemoAdmin);
+$('#logoutBtn').addEventListener('click', logoutUser);
 $('#clearHistory').addEventListener('click', () => {
   localStorage.removeItem('veritas-history');
   renderHistory();
@@ -2434,9 +2746,12 @@ $('#closeExplanation').addEventListener('click', () => renderExplanation(null));
 
 checkServer();
 setInterval(checkServer, 5000);
+seedDemoAdmin();
 setPlan(currentPlan);
+renderAccountState();
 handlePaymentReturn();
 renderHistory();
+renderUsageTable();
 renderPipeline([
   { label: 'Validate file', status: 'Waiting' },
   { label: 'Extract text', status: 'Waiting' },
