@@ -1,0 +1,11 @@
+{
+  "name": "ai-detection-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static AI writing detection and authorship improvement platform demo.",
+  "scripts": {
+    "build": "node scripts/build-static.js"
+  },
+  "devDependencies": {}
+}
+
