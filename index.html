@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Veritas AI Review - AI Writing Analysis Platform</title>
+<title>Veritas AI Detection System</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -1155,7 +1155,7 @@
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark" aria-label="Veritas AI Review logo">
+      <div class="brand-mark" aria-label="Veritas AI Detection System logo">
         <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
           <path d="M32 10 50 18v13c0 11.8-7.3 18.6-18 23-10.7-4.4-18-11.2-18-23V18l18-8Z" fill="#e7fffb" opacity=".14"/>
           <path d="M32 14 46 20v10.3c0 8.8-5.4 14.5-14 18.2-8.6-3.7-14-9.4-14-18.2V20l14-6Z" stroke="#7ee7dc" stroke-width="3" stroke-linejoin="round"/>
@@ -1163,7 +1163,7 @@
         </svg>
       </div>
       <div>
-        <h1>Veritas <span>AI Review</span></h1>
+        <h1>Veritas <span>AI Detection System</span></h1>
       </div>
     </div>
 
@@ -1282,7 +1282,7 @@
               <ul class="plain-list">
                 <li>Free users: detection report only</li>
                 <li>Premium users: all writing assistant features</li>
-                <li>Admins: usage monitoring and operational controls</li>
+                <li>Admins: all application features plus usage monitoring and operational controls</li>
               </ul>
               <button class="outline-button" type="button" onclick="switchSection('login')" style="margin-top:14px">Already have an account?</button>
             </div>
@@ -1709,7 +1709,7 @@
 
       <section id="admin" class="page-section">
         <div id="adminLock" class="admin-lock">
-          Admin access required. Login with an admin account to view usage monitoring and operational controls.
+          Admin access required. Login with an admin account to access all features, usage monitoring, and operational controls.
         </div>
         <div id="adminContent">
         <div class="cards-grid">
@@ -2148,6 +2148,7 @@ function renderResult(result) {
 }
 
 function setPlan(plan) {
+  if (isAdmin()) plan = 'premium';
   currentPlan = plan;
   localStorage.setItem('veritas-plan', plan);
   if (currentUser) {
@@ -2253,6 +2254,10 @@ function renderAccountState() {
 
 function isAdmin() {
   return currentUser && currentUser.role === 'admin';
+}
+
+function hasAllFeatures() {
+  return isAdmin() || currentPlan === 'premium';
 }
 
 function renderAdminAccess() {
@@ -2549,8 +2554,8 @@ function buildLocalRevision(passage) {
 }
 
 async function generateRevisionSuggestion() {
-  if (currentPlan !== 'premium') {
-    switchSection('pricing');
+  if (!hasAllFeatures()) {
+    switchSection('payment');
     return;
   }
   if (!currentResult || !selectedAssistantPassage) {
@@ -2798,7 +2803,7 @@ function switchSection(sectionId) {
     showInlineStatus('#loginStatus', 'Admin access required. Use an admin account to continue.', 'warning');
   }
   const premiumSections = ['assistant', 'history', 'settings'];
-  if (currentPlan !== 'premium' && premiumSections.includes(sectionId)) {
+  if (!hasAllFeatures() && premiumSections.includes(sectionId)) {
     sectionId = 'payment';
   }
   $$('.page-section').forEach(section => section.classList.toggle('active', section.id === sectionId));
