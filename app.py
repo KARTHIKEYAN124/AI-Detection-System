@@ -8,9 +8,12 @@ authorship or academic misconduct.
 
 from datetime import datetime, timezone
 from hashlib import sha256
+import secrets
+import sqlite3
 import os
 import pickle
 import re
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -49,6 +52,132 @@ SUPPORTED_FORMATS = ["PDF", "DOC", "DOCX", "TXT", "RTF", "ODT", "HTML", "EPUB"]
 MIN_ELIGIBLE_WORDS = 300
 ANALYSIS_CACHE = {}
 STRIPE_API_VERSION = "2026-02-25.clover"
+DB_PATH = os.getenv("APP_DB_PATH", "app_data.db")
+
+
+def db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    with db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user',
+                plan TEXT NOT NULL DEFAULT 'free',
+                created_at TEXT NOT NULL,
+                last_active_at TEXT
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sessions (
+                token TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS usage_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                event_type TEXT NOT NULL,
+                document_id TEXT,
+                analysis_id TEXT,
+                metadata TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+            """
+        )
+        admin_email = os.getenv("ADMIN_EMAIL", "admin@veritas.local")
+        admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
+        existing = conn.execute("SELECT id FROM users WHERE email = ?", (admin_email,)).fetchone()
+        if existing is None:
+            conn.execute(
+                """
+                INSERT INTO users (name, email, password_hash, role, plan, created_at)
+                VALUES (?, ?, ?, 'admin', 'premium', ?)
+                """,
+                (
+                    "Demo Admin",
+                    admin_email,
+                    generate_password_hash(admin_password),
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+
+
+def row_to_user(row):
+    if row is None:
+        return None
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "email": row["email"],
+        "role": row["role"],
+        "plan": row["plan"],
+        "created_at": row["created_at"],
+        "last_active_at": row["last_active_at"],
+    }
+
+
+def get_auth_user():
+    header = request.headers.get("Authorization", "")
+    if not header.startswith("Bearer "):
+        return None
+    token = header.removeprefix("Bearer ").strip()
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT users.* FROM sessions
+            JOIN users ON users.id = sessions.user_id
+            WHERE sessions.token = ?
+            """,
+            (token,),
+        ).fetchone()
+    return row_to_user(row)
+
+
+def log_usage(event_type, user_id=None, document_id=None, analysis_id=None, metadata=None):
+    if user_id is None:
+        user = get_auth_user()
+        user_id = user["id"] if user else None
+    with db() as conn:
+        conn.execute(
+            """
+            INSERT INTO usage_records (user_id, event_type, document_id, analysis_id, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                event_type,
+                document_id,
+                analysis_id,
+                metadata,
+                datetime.now(timezone.utc).isoformat(),
+            ),
+        )
+        if user_id:
+            conn.execute(
+                "UPDATE users SET last_active_at = ? WHERE id = ?",
+                (datetime.now(timezone.utc).isoformat(), user_id),
+            )
+
+
+init_db()
 
 
 def clean_text(text):
@@ -337,6 +466,123 @@ def index():
     return send_from_directory(".", "index.html")
 
 
+@app.route("/auth/register", methods=["POST"])
+def auth_register():
+    data = request.get_json() or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+    if not name or not email or len(password) < 6:
+        return jsonify({"error": "Name, email, and a password of at least 6 characters are required."}), 400
+    try:
+        with db() as conn:
+            conn.execute(
+                """
+                INSERT INTO users (name, email, password_hash, role, plan, created_at, last_active_at)
+                VALUES (?, ?, ?, 'user', 'free', ?, ?)
+                """,
+                (
+                    name,
+                    email,
+                    generate_password_hash(password),
+                    datetime.now(timezone.utc).isoformat(),
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+            row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+            token = secrets.token_urlsafe(32)
+            conn.execute(
+                "INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)",
+                (token, row["id"], datetime.now(timezone.utc).isoformat()),
+            )
+        log_usage("account_created", user_id=row["id"])
+        return jsonify({"success": True, "token": token, "user": row_to_user(row)})
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "An account with this email already exists."}), 409
+
+
+@app.route("/auth/login", methods=["POST"])
+def auth_login():
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+    with db() as conn:
+        row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        if row is None or not check_password_hash(row["password_hash"], password):
+            return jsonify({"error": "Invalid email or password."}), 401
+        token = secrets.token_urlsafe(32)
+        conn.execute(
+            "INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)",
+            (token, row["id"], datetime.now(timezone.utc).isoformat()),
+        )
+        conn.execute(
+            "UPDATE users SET last_active_at = ? WHERE id = ?",
+            (datetime.now(timezone.utc).isoformat(), row["id"]),
+        )
+    log_usage("login", user_id=row["id"])
+    return jsonify({"success": True, "token": token, "user": row_to_user(row)})
+
+
+@app.route("/auth/me")
+def auth_me():
+    user = get_auth_user()
+    if not user:
+        return jsonify({"error": "Not authenticated."}), 401
+    return jsonify({"success": True, "user": user})
+
+
+@app.route("/admin/usage")
+def admin_usage():
+    user = get_auth_user()
+    if not user or user["role"] != "admin":
+        return jsonify({"error": "Admin access required."}), 403
+    with db() as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                users.id,
+                users.name,
+                users.email,
+                users.role,
+                users.plan,
+                users.last_active_at,
+                COUNT(CASE WHEN usage_records.event_type = 'scan_completed' THEN 1 END) AS scans,
+                COUNT(CASE WHEN usage_records.event_type = 'report_downloaded' THEN 1 END) AS reports,
+                COUNT(CASE WHEN usage_records.event_type LIKE 'payment_%' THEN 1 END) AS payment_events
+            FROM users
+            LEFT JOIN usage_records ON usage_records.user_id = users.id
+            GROUP BY users.id
+            ORDER BY users.created_at DESC
+            """
+        ).fetchall()
+        totals = conn.execute(
+            """
+            SELECT event_type, COUNT(*) AS count
+            FROM usage_records
+            GROUP BY event_type
+            ORDER BY count DESC
+            """
+        ).fetchall()
+    return jsonify(
+        {
+            "success": True,
+            "users": [dict(row) for row in rows],
+            "totals": [dict(row) for row in totals],
+        }
+    )
+
+
+@app.route("/analyses/<analysis_id>/report-download", methods=["POST"])
+def report_downloaded(analysis_id):
+    analysis = ANALYSIS_CACHE.get(analysis_id)
+    log_usage(
+        "report_downloaded",
+        document_id=analysis["document_id"] if analysis else None,
+        analysis_id=analysis_id,
+    )
+    return jsonify({"success": True})
+
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
@@ -481,6 +727,12 @@ def analyze():
         }
 
         ANALYSIS_CACHE[response_data["analysis_id"]] = response_data
+        log_usage(
+            "scan_completed",
+            document_id=response_data["document_id"],
+            analysis_id=response_data["analysis_id"],
+            metadata=f"filename={filename};score={response_data['ai_score']};eligible_words={sections['eligible_words']}",
+        )
 
         return jsonify(convert_to_native(response_data))
     except Exception as exc:
@@ -544,6 +796,7 @@ def create_checkout_session():
             cancel_url=f"{origin}?payment=cancelled",
             metadata={"plan": "premium", "product": "ai-detection-system"},
         )
+        log_usage("payment_checkout_started", metadata=f"session_id={session.id};email={customer_email or ''}")
         return jsonify({"success": True, "checkout_url": session.url, "session_id": session.id})
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
@@ -700,6 +953,7 @@ def export_revised(document_id):
     data = request.get_json() or {}
     text = data.get("text", "")
     export_format = data.get("format", "txt")
+    log_usage("revised_exported", document_id=document_id, metadata=f"format={export_format}")
     return jsonify(
         {
             "success": True,

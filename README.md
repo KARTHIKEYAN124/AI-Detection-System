@@ -69,7 +69,29 @@ In this static MVP:
 
 This usage data is stored in browser `localStorage`, so it is only for demo/testing on one browser.
 
-For production, track usage server-side in a database table such as `usage_records` with:
+The Flask backend now includes a production-style SQLite foundation:
+
+- `users`
+- `sessions`
+- `usage_records`
+
+The app logs server-side events for:
+
+- `account_created`
+- `login`
+- `scan_completed`
+- `report_downloaded`
+- `payment_checkout_started`
+- `revised_exported`
+
+Admins can query usage through:
+
+```http
+GET /admin/usage
+Authorization: Bearer <admin-session-token>
+```
+
+For a larger production deployment, move the same schema to PostgreSQL and track:
 
 - `user_id`
 - `organization_id`

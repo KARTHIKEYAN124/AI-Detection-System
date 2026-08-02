@@ -1762,6 +1762,7 @@ let currentResult = null;
 let currentFilename = 'pasted-text.txt';
 let currentPlan = localStorage.getItem('veritas-plan') || 'free';
 let currentUser = JSON.parse(localStorage.getItem('veritas-current-user') || 'null');
+let authToken = localStorage.getItem('veritas-auth-token') || '';
 let selectedAssistantPassage = null;
 let currentRevision = null;
 
@@ -1941,8 +1942,12 @@ async function checkServer() {
     const res = await fetch(`${API_URL}/health`);
     if (!res.ok) throw new Error('offline');
     const data = await res.json();
-    $('#serverStatus').textContent = `Server connected - ${data.features} model features`;
-    return true;
+    if (data.model_loaded) {
+      $('#serverStatus').textContent = `Server connected - ${data.features} model features`;
+      return true;
+    }
+    $('#serverStatus').textContent = 'Static demo mode - browser-only analysis';
+    return false;
   } catch {
     $('#serverStatus').textContent = 'Server offline - run python app.py';
     return false;
@@ -2073,7 +2078,7 @@ async function runAnalysis() {
     if (await checkServer()) {
       const res = await fetch(`${API_URL}/analyze`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           text,
           filename: activeTab === 'file' ? currentFilename : 'pasted-text.txt',
@@ -2152,6 +2157,10 @@ function getUsers() {
   }
 }
 
+function authHeaders(extra = {}) {
+  return authToken ? { ...extra, Authorization: `Bearer ${authToken}` } : extra;
+}
+
 function saveUsers(users) {
   localStorage.setItem('veritas-users', JSON.stringify(users));
 }
@@ -2185,6 +2194,12 @@ function setCurrentUser(user) {
   renderAccountState();
 }
 
+function setAuthToken(token) {
+  authToken = token || '';
+  if (authToken) localStorage.setItem('veritas-auth-token', authToken);
+  else localStorage.removeItem('veritas-auth-token');
+}
+
 function renderAccountState() {
   const badge = $('#accountBadge');
   const logout = $('#logoutBtn');
@@ -2211,18 +2226,42 @@ function renderAdminAccess() {
   if (isAdmin()) renderUsageTable();
 }
 
-function registerUser(event) {
+async function registerUser(event) {
   event.preventDefault();
+  const payload = {
+    name: $('#registerName').value.trim(),
+    email: $('#registerEmail').value.trim().toLowerCase(),
+    password: $('#registerPassword').value
+  };
+  if (await checkServer()) {
+    try {
+      const res = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed.');
+      setAuthToken(data.token);
+      setCurrentUser(data.user);
+      showInlineStatus('#registerStatus', 'Account created on the backend. You are logged in.', 'success');
+      switchSection('dashboard');
+      return;
+    } catch (err) {
+      showInlineStatus('#registerStatus', err.message, 'warning');
+      return;
+    }
+  }
   const users = getUsers();
-  const email = $('#registerEmail').value.trim().toLowerCase();
+  const email = payload.email;
   if (users.some(user => user.email === email)) {
     showInlineStatus('#registerStatus', 'An account with this email already exists.', 'warning');
     return;
   }
   const user = {
-    name: $('#registerName').value.trim() || email,
+    name: payload.name || email,
     email,
-    password: $('#registerPassword').value,
+    password: payload.password,
     role: 'user',
     plan: 'free',
     scans: 0,
@@ -2237,10 +2276,29 @@ function registerUser(event) {
   switchSection('dashboard');
 }
 
-function loginUser(event) {
+async function loginUser(event) {
   event.preventDefault();
   const email = $('#loginEmail').value.trim().toLowerCase();
   const password = $('#loginPassword').value;
+  if (await checkServer()) {
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed.');
+      setAuthToken(data.token);
+      setCurrentUser(data.user);
+      showInlineStatus('#loginStatus', `Logged in as ${data.user.role}.`, 'success');
+      switchSection(data.user.role === 'admin' ? 'admin' : 'dashboard');
+      return;
+    } catch (err) {
+      showInlineStatus('#loginStatus', err.message, 'warning');
+      return;
+    }
+  }
   const user = getUsers().find(item => item.email === email && item.password === password);
   if (!user) {
     showInlineStatus('#loginStatus', 'Invalid email or password.', 'warning');
@@ -2263,6 +2321,7 @@ function loginDemoAdmin() {
 }
 
 function logoutUser() {
+  setAuthToken('');
   setCurrentUser(null);
   switchSection('home');
 }
@@ -2308,6 +2367,33 @@ function renderUsageTable() {
   $('#adminInsufficient').textContent = history.filter(item => item.eligibility_status === 'insufficient_text').length;
 }
 
+async function refreshServerUsage() {
+  if (!authToken || !isAdmin() || !(await checkServer())) return false;
+  try {
+    const res = await fetch(`${API_URL}/admin/usage`, { headers: authHeaders() });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not load usage.');
+    $('#adminUsers').textContent = data.users.length;
+    $('#usageTable').innerHTML = data.users.length ? data.users.map(user => `
+      <tr>
+        <td>${escapeHtml(user.email)}</td>
+        <td>${escapeHtml(user.role)}</td>
+        <td>${escapeHtml(user.plan || 'free')}</td>
+        <td>${Number(user.scans || 0).toLocaleString()}</td>
+        <td>${Number(user.reports || 0).toLocaleString()}</td>
+        <td>${user.last_active_at ? new Date(user.last_active_at).toLocaleString() : 'Never'}</td>
+      </tr>
+    `).join('') : '<tr><td colspan="6">No registered users yet.</td></tr>';
+    const totals = Object.fromEntries(data.totals.map(item => [item.event_type, item.count]));
+    $('#adminAnalyses').textContent = Number(totals.scan_completed || 0).toLocaleString();
+    $('#adminElevated').textContent = Number(totals.payment_checkout_started || 0).toLocaleString();
+    $('#adminInsufficient').textContent = Number(totals.report_downloaded || 0).toLocaleString();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function showPaymentStatus(message, type = 'warning') {
   $('#paymentStatus').textContent = message;
   $('#paymentStatus').className = `payment-status show ${type}`;
@@ -2321,7 +2407,7 @@ async function startCheckout() {
     if (await checkServer()) {
       const res = await fetch(`${API_URL}/payments/create-checkout-session`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ email, origin: window.location.origin + window.location.pathname })
       });
       const data = await res.json();
@@ -2444,7 +2530,7 @@ async function generateRevisionSuggestion() {
     if (await checkServer()) {
       const res = await fetch(`${API_URL}/analyses/${currentResult.analysis_id}/rewrite-preview`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload)
       });
       const data = await res.json();
@@ -2604,6 +2690,12 @@ function renderHistory() {
 function openReportWindow() {
   if (!currentResult) return;
   incrementUsage('report');
+  if (authToken) {
+    fetch(`${API_URL}/analyses/${currentResult.analysis_id}/report-download`, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' })
+    }).catch(() => {});
+  }
   const result = currentResult;
   const passageRows = result.passages.map(p => `
     <tr>
@@ -2666,6 +2758,7 @@ function switchSection(sectionId) {
   }
   $$('.page-section').forEach(section => section.classList.toggle('active', section.id === sectionId));
   $$('.nav button').forEach(button => button.classList.toggle('active', button.dataset.section === sectionId));
+  if (sectionId === 'admin') refreshServerUsage();
 }
 
 $$('.nav button').forEach(button => button.addEventListener('click', () => switchSection(button.dataset.section)));
