@@ -524,13 +524,8 @@ def auth_register():
                 ),
             )
             row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-            token = secrets.token_urlsafe(32)
-            conn.execute(
-                "INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)",
-                (token, row["id"], datetime.now(timezone.utc).isoformat()),
-            )
         log_usage("account_created", user_id=row["id"])
-        return jsonify({"success": True, "token": token, "user": row_to_user(row)})
+        return jsonify({"success": True, "user": row_to_user(row)})
     except sqlite3.IntegrityError:
         return jsonify({"error": "An account with this email already exists."}), 409
 

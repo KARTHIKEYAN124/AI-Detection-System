@@ -1202,7 +1202,6 @@
       <button data-section="history"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v6l4 2"/></svg>History</button>
       <button data-section="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 1 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>Pricing</button>
       <button data-section="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M7 15h3"/></svg>Payment</button>
-      <button data-section="admin"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Admin</button>
       <button data-section="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.05.05a2 2 0 1 1-2.83 2.83l-.05-.05A1.8 1.8 0 0 0 15 19.4a1.8 1.8 0 0 0-1 .6 1.8 1.8 0 0 0-.4 1.2V22a2 2 0 1 1-4 0v-.08a1.8 1.8 0 0 0-.4-1.2 1.8 1.8 0 0 0-1-.6 1.8 1.8 0 0 0-1.98.36l-.05.05a2 2 0 1 1-2.83-2.83l.05-.05A1.8 1.8 0 0 0 4.6 15a1.8 1.8 0 0 0-.6-1 1.8 1.8 0 0 0-1.2-.4H2a2 2 0 1 1 0-4h.08a1.8 1.8 0 0 0 1.2-.4 1.8 1.8 0 0 0 .6-1 1.8 1.8 0 0 0-.36-1.98l-.05-.05a2 2 0 1 1 2.83-2.83l.05.05A1.8 1.8 0 0 0 9 4.6c.3-.12.54-.28.75-.5.32-.33.48-.72.48-1.2V2a2 2 0 1 1 4 0v.08c0 .48.16.87.48 1.2.21.22.45.38.75.5a1.8 1.8 0 0 0 1.98-.36l.05-.05a2 2 0 1 1 2.83 2.83l-.05.05A1.8 1.8 0 0 0 19.4 9c.12.3.28.54.5.75.33.32.72.48 1.2.48H22a2 2 0 1 1 0 4h-.08c-.48 0-.87.16-1.2.48-.22.21-.38.45-.5.75z"/></svg>Settings</button>
     </nav>
 
@@ -1239,7 +1238,6 @@
               <button class="outline-button" type="button" onclick="switchSection('login')">Login</button>
               <button class="primary-button" type="button" onclick="switchSection('dashboard')">Start free detection</button>
               <button class="outline-button" type="button" onclick="switchSection('pricing')">View plans</button>
-              <button class="outline-button" type="button" onclick="switchSection('admin')">Admin</button>
             </div>
             <div class="cards-grid" style="margin-top:18px">
               <div class="panel kpi"><span class="small">Free</span><strong>Report</strong><span class="small">Detection score, confidence, limitations</span></div>
@@ -2339,10 +2337,12 @@ async function registerUser(event) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed.');
-      setAuthToken(data.token);
-      setCurrentUser(data.user);
-      showInlineStatus('#registerStatus', 'Account created on the backend. You are logged in.', 'success');
-      switchSection('dashboard');
+      setAuthToken('');
+      setCurrentUser(null);
+      $('#loginEmail').value = payload.email;
+      $('#loginPassword').value = '';
+      switchSection('login');
+      showInlineStatus('#loginStatus', 'Account created. Log in with your email and password to continue.', 'success');
       return;
     } catch (err) {
       showInlineStatus('#registerStatus', err.message, 'warning');
@@ -2368,9 +2368,11 @@ async function registerUser(event) {
   };
   users.push(user);
   saveUsers(users);
-  setCurrentUser(user);
-  showInlineStatus('#registerStatus', 'Account created. You are logged in on the Free plan.', 'success');
-  switchSection('dashboard');
+  setCurrentUser(null);
+  $('#loginEmail').value = email;
+  $('#loginPassword').value = '';
+  switchSection('login');
+  showInlineStatus('#loginStatus', 'Account created. Log in with your email and password to continue.', 'success');
 }
 
 async function loginUser(event) {
