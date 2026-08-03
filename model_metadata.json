@@ -1,0 +1,68 @@
+{
+  "model_version": "tfidf-word-char-logreg-hc3-v2",
+  "trained_at": "2026-08-03T06:10:13.623040+00:00",
+  "training_rows": 20000,
+  "test_rows": 4000,
+  "label_counts": {
+    "1": 10000,
+    "0": 10000
+  },
+  "sources": [
+    "Hello-SimpleAI/HC3:finance",
+    "Hello-SimpleAI/HC3:medicine",
+    "Hello-SimpleAI/HC3:open_qa",
+    "Hello-SimpleAI/HC3:reddit_eli5",
+    "Hello-SimpleAI/HC3:wiki_csai"
+  ],
+  "metrics": {
+    "accuracy": 0.98675,
+    "precision_ai": 0.9788489916379735,
+    "recall_ai": 0.995,
+    "f1_ai": 0.9868584180510787,
+    "roc_auc": 0.9993405,
+    "confusion_matrix": [
+      [
+        1957,
+        43
+      ],
+      [
+        10,
+        1990
+      ]
+    ],
+    "classification_report": {
+      "human": {
+        "precision": 0.9949161159125572,
+        "recall": 0.9785,
+        "f1-score": 0.9866397781699017,
+        "support": 2000.0
+      },
+      "ai": {
+        "precision": 0.9788489916379735,
+        "recall": 0.995,
+        "f1-score": 0.9868584180510787,
+        "support": 2000.0
+      },
+      "accuracy": 0.98675,
+      "macro avg": {
+        "precision": 0.9868825537752653,
+        "recall": 0.98675,
+        "f1-score": 0.9867490981104902,
+        "support": 4000.0
+      },
+      "weighted avg": {
+        "precision": 0.9868825537752652,
+        "recall": 0.98675,
+        "f1-score": 0.9867490981104902,
+        "support": 4000.0
+      }
+    }
+  },
+  "threshold_policy": {
+    "low_ai_signal": "score < 70 with enough reliability",
+    "mixed_or_inconclusive": "40 <= score < 70 or low reliability",
+    "elevated_ai_signal": "score >= 70 with enough reliability",
+    "strong_statistical_evidence": "score >= 85 or <= 15 with high reliability; still not proof of authorship"
+  },
+  "responsible_use": "Dataset-backed AI text detection can support review, but should not be treated as final proof. Use alongside drafts, citations, version history, and author discussion."
+}

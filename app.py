@@ -8,6 +8,7 @@ authorship or academic misconduct.
 
 from datetime import datetime, timezone
 from hashlib import sha256
+import json
 import secrets
 import sqlite3
 import os
@@ -46,6 +47,21 @@ try:
 except FileNotFoundError:
     print("Model files not found. Run 'python train_model.py' first.")
     raise SystemExit(1)
+
+try:
+    with open("model_metadata.json", "r", encoding="utf-8") as f:
+        MODEL_METADATA = json.load(f)
+except FileNotFoundError:
+    MODEL_METADATA = {
+        "model_version": "tfidf-logreg-demo-v1",
+        "training_rows": None,
+        "sources": ["legacy local model"],
+        "metrics": {},
+        "responsible_use": (
+            "This detector reports statistical evidence only. It should not be treated as final proof "
+            "of authorship or misconduct."
+        ),
+    }
 
 
 SUPPORTED_FORMATS = ["PDF", "DOC", "DOCX", "TXT", "RTF", "ODT", "HTML", "EPUB"]
@@ -381,6 +397,20 @@ def passage_level(score, reliability):
     return "low"
 
 
+def evidence_strength(score, reliability):
+    if reliability < 45:
+        return "limited_statistical_evidence", "Limited statistical evidence"
+    if score >= 85 and reliability >= 70:
+        return "strong_ai_statistical_evidence", "Strong statistical evidence of AI-like writing"
+    if score <= 15 and reliability >= 70:
+        return "strong_human_statistical_evidence", "Strong statistical evidence of human-like writing"
+    if score >= 70:
+        return "moderate_ai_statistical_evidence", "Moderate statistical evidence of AI-like writing"
+    if score <= 30:
+        return "moderate_human_statistical_evidence", "Moderate statistical evidence of human-like writing"
+    return "inconclusive_statistical_evidence", "Inconclusive statistical evidence"
+
+
 def explain_passage(text, score, reliability, style):
     lower = text.lower()
     reasons = []
@@ -655,11 +685,12 @@ def analyze():
         ) = score_text(text)
 
         if abs(ml_score - heuristic_score) > 25:
-            limitations.append("Transformer-style and stylometric signals disagree.")
+            limitations.append("Dataset model and stylometric signals disagree.")
         if style["vocab_diversity"] < 35:
             limitations.append("Low vocabulary diversity can reduce confidence.")
 
         classification, classification_label = classification_for(final_score, reliability)
+        evidence_code, evidence_label = evidence_strength(final_score, reliability)
         confidence = confidence_label(reliability)
 
         passage_results = []
@@ -700,7 +731,13 @@ def analyze():
             "analysis_id": f"ana_{doc_hash[:10]}",
             "document_id": f"doc_{doc_hash[:10]}",
             "generated_at": now.isoformat(),
-            "model_version": "tfidf-logreg-demo-v1",
+            "model_version": MODEL_METADATA.get("model_version", "tfidf-logreg-demo-v1"),
+            "model_training": {
+                "training_rows": MODEL_METADATA.get("training_rows"),
+                "test_rows": MODEL_METADATA.get("test_rows"),
+                "sources": MODEL_METADATA.get("sources", []),
+                "metrics": MODEL_METADATA.get("metrics", {}),
+            },
             "eligibility_status": eligibility_status,
             "ai_score": int(round(final_score)),
             "ai_signal": round(final_score / 100, 3),
@@ -712,6 +749,8 @@ def analyze():
             "model_confidence": round(model_confidence, 1),
             "classification": classification,
             "classification_label": classification_label,
+            "evidence_strength": evidence_code,
+            "evidence_strength_label": evidence_label,
             "verdict": classification_label,
             "probabilities": {
                 "human": round(probabilities[0] * 100, 1),
@@ -748,9 +787,9 @@ def analyze():
                 {"label": "Generate report", "status": "completed"},
             ],
             "disclaimer": (
-                "This report identifies statistical patterns associated with AI-generated writing. "
-                "It does not prove authorship or academic misconduct and should be reviewed alongside "
-                "drafts, citations, writing history and discussion with the author."
+                "This report identifies dataset-backed statistical patterns associated with AI-generated writing. "
+                "Even strong statistical evidence is not final proof of authorship or academic misconduct. "
+                "Review it alongside drafts, citations, writing history, and discussion with the author."
             ),
             "word_count": sections["total_words"],
             "char_count": len(text),
@@ -780,6 +819,9 @@ def health():
             "status": "healthy",
             "model_loaded": True,
             "features": int(len(vectorizer.get_feature_names_out())),
+            "model_version": MODEL_METADATA.get("model_version", "tfidf-logreg-demo-v1"),
+            "training_rows": MODEL_METADATA.get("training_rows"),
+            "validation_metrics": MODEL_METADATA.get("metrics", {}),
             "supported_formats": SUPPORTED_FORMATS,
             "minimum_eligible_words": MIN_ELIGIBLE_WORDS,
         }

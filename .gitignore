@@ -9,3 +9,5 @@ dist/
 app_data.db
 *.sqlite
 *.sqlite3
+data/raw/*
+!data/raw/.gitkeep

@@ -1858,6 +1858,13 @@ function localAnalyzeText(text, filename = 'pasted-text.txt') {
   const classificationLabel = confidenceScore < 45 || (aiScore >= 40 && aiScore < 70)
     ? 'Mixed or inconclusive evidence'
     : aiScore >= 70 ? 'Elevated AI-writing signal' : 'Low AI-writing signal';
+  const evidenceStrength = confidenceScore < 45
+    ? 'Limited statistical evidence'
+    : aiScore >= 85 ? 'Strong statistical evidence of AI-like writing'
+    : aiScore <= 15 ? 'Strong statistical evidence of human-like writing'
+    : aiScore >= 70 ? 'Moderate statistical evidence of AI-like writing'
+    : aiScore <= 30 ? 'Moderate statistical evidence of human-like writing'
+    : 'Inconclusive statistical evidence';
   const sentences = sentenceList(text);
   const passages = [];
   let cursor = 0;
@@ -1906,6 +1913,7 @@ function localAnalyzeText(text, filename = 'pasted-text.txt') {
     model_confidence: confidenceScore,
     classification: classificationLabel.toLowerCase().replaceAll(' ', '_'),
     classification_label: classificationLabel,
+    evidence_strength_label: evidenceStrength,
     verdict: classificationLabel,
     probabilities: { human: 100 - aiScore, ai: aiScore },
     style_metrics: { perplexity: Math.round(style.perplexity), burstiness: Math.round(style.burstiness), vocab_diversity: Math.round(style.vocab_diversity), repetition: Math.round(style.repetition) },
@@ -1915,7 +1923,7 @@ function localAnalyzeText(text, filename = 'pasted-text.txt') {
     sentence_analysis: [],
     passages,
     processing: ['Validate file', 'Extract text', 'Identify eligible prose', 'Segment passages', 'Run detection models', 'Calibrate score', 'Generate report'].map(label => ({ label, status: 'completed' })),
-    disclaimer: 'This browser report identifies statistical writing patterns. It does not prove authorship or misconduct and should be reviewed alongside drafts, citations, writing history, and discussion with the author.',
+    disclaimer: 'This browser report identifies statistical writing patterns. Even strong statistical evidence is not final proof of authorship or misconduct and should be reviewed alongside drafts, citations, writing history, and discussion with the author.',
     word_count: words.length,
     char_count: text.length
   };
@@ -2133,7 +2141,7 @@ function renderResult(result) {
   $('#confidenceText').textContent = result.confidence.toUpperCase();
   $('#humanLikelihood').textContent = `${result.human_likelihood}%`;
   $('#eligibleWords').textContent = `${Number(result.document.eligible_word_count).toLocaleString()} words`;
-  $('#classificationText').textContent = `${result.classification_label}. The score is a calibrated review signal for this demo, not an authorship claim.`;
+  $('#classificationText').textContent = `${result.evidence_strength_label || result.classification_label}. The score is a calibrated review signal, not an authorship claim.`;
   $('#limitationsList').innerHTML = result.limitations.map(item => `<li>${escapeHtml(item)}</li>`).join('');
   $('#documentTitle').textContent = result.document.filename;
   $('#documentSubtitle').textContent = `${result.document.word_count.toLocaleString()} words - ${result.document.eligible_word_count.toLocaleString()} eligible - ${result.model_version}`;
@@ -2691,7 +2699,7 @@ function renderReports(result) {
       <div class="panel kpi"><span class="small">AI-writing signal</span><strong>${result.ai_score}%</strong><span class="small">${escapeHtml(result.classification_label)}</span></div>
       <div class="panel kpi"><span class="small">Confidence</span><strong>${escapeHtml(result.confidence)}</strong><span class="small">${result.confidence_score}% reliability</span></div>
       <div class="panel kpi"><span class="small">Eligible prose</span><strong>${result.document.eligible_word_count}</strong><span class="small">of ${result.document.word_count} words</span></div>
-      <div class="panel kpi"><span class="small">Flagged passages</span><strong>${result.passages.filter(p => p.level === 'elevated').length}</strong><span class="small">Elevated signal</span></div>
+      <div class="panel kpi"><span class="small">Evidence strength</span><strong>${escapeHtml(result.confidence)}</strong><span class="small">${escapeHtml(result.evidence_strength_label || result.classification_label)}</span></div>
     </div>
     <p style="margin-top:16px">${escapeHtml(result.disclaimer)}</p>
   `;
@@ -2781,6 +2789,8 @@ function openReportWindow() {
       </div>
       <h2>Classification</h2>
       <p>${escapeHtml(result.classification_label)}</p>
+      <h2>Evidence Strength</h2>
+      <p>${escapeHtml(result.evidence_strength_label || result.classification_label)}. This is statistical evidence, not final proof of authorship.</p>
       <h2>Limitations</h2>
       <ul>${result.limitations.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
       <h2>Passage Analysis</h2>

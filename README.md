@@ -1,4 +1,4 @@
-# AI Detection System
+# Veritas AI Detection System
 
 AI writing analysis and authorship improvement platform MVP.
 
@@ -51,9 +51,51 @@ The frontend can run as a static site. When the Flask API is unavailable, it use
 
 GitHub Pages is configured through `.github/workflows/pages.yml`.
 
+## Dataset-Backed Model Training
+
+The detector can be retrained from real AI-vs-human datasets instead of the old synthetic demo examples.
+
+Install dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Option A: download a Kaggle dataset with `kagglehub`:
+
+```powershell
+python train_model.py --kaggle-dataset shanegerami/ai-vs-human-text
+```
+
+Option B: place Kaggle or GitHub CSV/JSONL exports under `data/raw`, then train:
+
+```powershell
+python train_model.py --data-dir data/raw
+```
+
+Option C: include the HC3 human-vs-ChatGPT corpus:
+
+```powershell
+python train_model.py --include-hc3
+```
+
+You can combine sources:
+
+```powershell
+python train_model.py --kaggle-dataset shanegerami/ai-vs-human-text --include-hc3 --max-rows 120000
+```
+
+Training writes:
+
+- `model.pkl`
+- `vectorizer.pkl`
+- `model_metadata.json`
+
+The app reads `model_metadata.json` and includes model version, training row count, source names, and validation metrics in backend reports.
+
 ## Responsible Use
 
-This app reports statistical writing-pattern signals for human review. It does not prove authorship or academic misconduct. The writing assistant improves clarity and evidence while preserving meaning; it is not designed or marketed to bypass AI detectors.
+This app reports statistical writing-pattern evidence for human review. Even a dataset-backed model with strong validation metrics does not prove authorship or academic misconduct by itself. Use reports alongside drafts, citations, version history, and discussion with the author. The writing assistant improves clarity and evidence while preserving meaning; it is not designed or marketed to bypass AI detectors.
 
 ## Checking User Usage
 
