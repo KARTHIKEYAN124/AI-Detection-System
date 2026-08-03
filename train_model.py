@@ -1,5 +1,5 @@
 """
-Dataset-backed training pipeline for Veritas AI Detection System.
+Dataset-backed training pipeline for OriginScript AI.
 
 The trainer can ingest:
 - Kaggle/local CSV or JSONL files placed under data/raw
@@ -374,7 +374,7 @@ def train(args: argparse.Namespace) -> dict:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train Veritas AI text detector from real labeled datasets.")
+    parser = argparse.ArgumentParser(description="Train OriginScript AI text detector from real labeled datasets.")
     parser.add_argument("--data-dir", default="data/raw", help="Directory containing Kaggle/GitHub CSV or JSONL files.")
     parser.add_argument("--kaggle-dataset", action="append", default=[], help="Kaggle slug, for example shanegerami/ai-vs-human-text.")
     parser.add_argument("--include-hc3", action="store_true", help="Load Hello-SimpleAI/HC3 human vs ChatGPT data.")

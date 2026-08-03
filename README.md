@@ -1,4 +1,4 @@
-# Veritas AI Detection System
+# OriginScript AI
 
 AI writing analysis and authorship improvement platform MVP.
 
@@ -104,7 +104,7 @@ In this static MVP:
 1. Open the website.
 2. Go to `Login`.
 3. Use the demo admin account:
-   - Email: `admin@veritas.local`
+   - Email: `admin@originscript.local`
    - Password: `admin123`
 4. Open `Admin`.
 5. Review the `User Usage` table for scans, report downloads, plan, role, and last active time.

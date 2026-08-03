@@ -118,7 +118,7 @@ def init_db():
             )
             """
         )
-        admin_email = os.getenv("ADMIN_EMAIL", "admin@veritas.local")
+        admin_email = os.getenv("ADMIN_EMAIL", "admin@originscript.local")
         admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
         existing = conn.execute("SELECT id FROM users WHERE email = ?", (admin_email,)).fetchone()
         if existing is None:
@@ -854,7 +854,7 @@ def create_checkout_session():
             "unit_amount": 500,
             "recurring": {"interval": "month"},
             "product_data": {
-                "name": "Veritas AI Review Premium",
+                "name": "OriginScript AI Premium",
                 "description": "Writing Improvement Assistant, comparison, reanalysis, and export tools.",
             },
         }
