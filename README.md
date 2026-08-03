@@ -151,6 +151,8 @@ For a larger production deployment, move the same schema to PostgreSQL and track
 
 Admin pages should read usage through protected backend endpoints and require a verified admin role on the server, not only in the browser.
 
+Admins and normal users sign in through the same `Login` page. Admin-only areas such as `Admin`, `History`, user usage, and traffic analytics are unlocked by the authenticated user's `role = admin`.
+
 ## Checking Website Traffic
 
 In the Flask backend, page views are logged through:
@@ -172,6 +174,7 @@ The response includes:
 - estimated unique visitors
 - latest page view time
 - usage events by type
+- 5-minute traffic timeline buckets for the live Admin graph
 
 On the static live demo, traffic counters use browser-local fallback data. For real public analytics across all visitors, connect a production backend, Cloudflare Web Analytics, Plausible, Google Analytics, or another analytics provider.
 

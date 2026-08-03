@@ -776,6 +776,25 @@
     margin-top: 14px;
   }
 
+  .traffic-chart {
+    width: 100%;
+    min-height: 230px;
+  }
+
+  .traffic-chart svg {
+    width: 100%;
+    height: 220px;
+    display: block;
+  }
+
+  .traffic-chart .empty {
+    min-height: 180px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    text-align: center;
+  }
+
   .screen-reader {
     position: absolute;
     width: 1px;
@@ -1614,6 +1633,10 @@
       </section>
 
       <section id="history" class="page-section">
+        <div id="historyLock" class="admin-lock">
+          Admin access required. Login with an admin account to view analysis history.
+        </div>
+        <div id="historyContent">
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">Analysis History</h2>
@@ -1625,6 +1648,7 @@
               <tbody id="historyTable"></tbody>
             </table>
           </div>
+        </div>
         </div>
       </section>
 
@@ -1722,6 +1746,17 @@
           <div class="panel kpi"><span class="small">Last visit</span><strong id="trafficLast" style="font-size:15px">--</strong><span class="small">Latest page view</span></div>
         </div>
         <div class="panel admin-table">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Real-Time Traffic Analysis</h2>
+              <p class="small">Updates while the Admin page is open. Backend mode uses server page-view events; static mode uses this browser session.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="trafficChart" class="traffic-chart"></div>
+          </div>
+        </div>
+        <div class="panel admin-table">
           <div class="panel-header"><h2 class="panel-title">User Usage</h2></div>
           <div class="panel-body usage-table-wrap">
             <table>
@@ -1779,6 +1814,7 @@ let currentPlan = localStorage.getItem('veritas-plan') || 'free';
 let currentUser = JSON.parse(localStorage.getItem('veritas-current-user') || 'null');
 let authToken = localStorage.getItem('veritas-auth-token') || '';
 let visitorId = localStorage.getItem('veritas-visitor-id') || '';
+let trafficRefreshTimer = null;
 let selectedAssistantPassage = null;
 let currentRevision = null;
 
@@ -2196,6 +2232,13 @@ function ensureVisitorId() {
 
 async function logPageView() {
   ensureVisitorId();
+  const views = getLocalTrafficEvents();
+  views.push({
+    visitor_id: visitorId,
+    created_at: new Date().toISOString(),
+    path: window.location.pathname + window.location.search
+  });
+  localStorage.setItem('veritas-local-traffic-events', JSON.stringify(views.slice(-500)));
   if (!(await checkServer())) return;
   fetch(`${API_URL}/traffic/pageview`, {
     method: 'POST',
@@ -2256,7 +2299,28 @@ function renderAdminAccess() {
   if (!lock || !content) return;
   lock.style.display = isAdmin() ? 'none' : 'block';
   content.style.display = isAdmin() ? 'block' : 'none';
-  if (isAdmin()) renderUsageTable();
+  renderHistoryAccess();
+  toggleAdminNav();
+  if (isAdmin()) {
+    renderUsageTable();
+    startTrafficRefresh();
+  } else {
+    stopTrafficRefresh();
+  }
+}
+
+function renderHistoryAccess() {
+  const lock = $('#historyLock');
+  const content = $('#historyContent');
+  if (!lock || !content) return;
+  lock.style.display = isAdmin() ? 'none' : 'block';
+  content.style.display = isAdmin() ? 'block' : 'none';
+}
+
+function toggleAdminNav() {
+  $$('[data-section="history"]').forEach(button => {
+    button.style.display = isAdmin() ? 'flex' : 'none';
+  });
 }
 
 async function registerUser(event) {
@@ -2393,6 +2457,7 @@ function renderUsageTable() {
   $('#trafficViews').textContent = localViews.toLocaleString();
   $('#trafficVisitors').textContent = localViews ? '1' : '0';
   $('#trafficLast').textContent = localStorage.getItem('veritas-local-last-pageview') || '--';
+  renderTrafficChart(buildLocalTrafficTimeline());
 }
 
 async function refreshServerUsage() {
@@ -2419,9 +2484,113 @@ async function refreshServerUsage() {
     $('#trafficViews').textContent = Number(data.traffic.page_views || 0).toLocaleString();
     $('#trafficVisitors').textContent = Number(data.traffic.unique_visitors || 0).toLocaleString();
     $('#trafficLast').textContent = data.traffic.last_pageview ? new Date(data.traffic.last_pageview).toLocaleString() : '--';
+    renderTrafficChart(data.traffic.timeline || []);
     return true;
   } catch {
     return false;
+  }
+}
+
+function getLocalTrafficEvents() {
+  try {
+    return JSON.parse(localStorage.getItem('veritas-local-traffic-events') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function buildLocalTrafficTimeline() {
+  const now = Date.now();
+  const bucketMinutes = 5;
+  const bucketCount = 24;
+  const buckets = Array.from({ length: bucketCount }, (_, index) => {
+    const start = now - bucketMinutes * 60000 * (bucketCount - index);
+    return {
+      label: new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      start,
+      end: start + bucketMinutes * 60000,
+      page_views: 0,
+      visitor_ids: new Set()
+    };
+  });
+  getLocalTrafficEvents().forEach(event => {
+    const createdAt = Date.parse(event.created_at);
+    if (!Number.isFinite(createdAt)) return;
+    const bucket = buckets.find(item => createdAt >= item.start && createdAt < item.end);
+    if (!bucket) return;
+    bucket.page_views += 1;
+    if (event.visitor_id) bucket.visitor_ids.add(event.visitor_id);
+  });
+  return buckets.map(bucket => ({
+    label: bucket.label,
+    page_views: bucket.page_views,
+    unique_visitors: bucket.visitor_ids.size
+  }));
+}
+
+function renderTrafficChart(timeline) {
+  const el = $('#trafficChart');
+  if (!el) return;
+  const rows = Array.isArray(timeline) ? timeline : [];
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty">No traffic events yet.</div>';
+    return;
+  }
+  const width = 720;
+  const height = 220;
+  const pad = { top: 18, right: 20, bottom: 34, left: 38 };
+  const chartWidth = width - pad.left - pad.right;
+  const chartHeight = height - pad.top - pad.bottom;
+  const maxViews = Math.max(1, ...rows.map(row => Number(row.page_views || 0)));
+  const maxVisitors = Math.max(1, ...rows.map(row => Number(row.unique_visitors || 0)));
+  const points = rows.map((row, index) => {
+    const x = pad.left + (rows.length === 1 ? chartWidth : (index / (rows.length - 1)) * chartWidth);
+    const yViews = pad.top + chartHeight - (Number(row.page_views || 0) / maxViews) * chartHeight;
+    const yVisitors = pad.top + chartHeight - (Number(row.unique_visitors || 0) / maxVisitors) * chartHeight;
+    return { x, yViews, yVisitors, row };
+  });
+  const viewPath = points.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.yViews.toFixed(1)}`).join(' ');
+  const visitorPath = points.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.yVisitors.toFixed(1)}`).join(' ');
+  const bars = points.map(point => {
+    const barWidth = Math.max(5, chartWidth / rows.length - 4);
+    const barHeight = pad.top + chartHeight - point.yViews;
+    return `<rect x="${(point.x - barWidth / 2).toFixed(1)}" y="${point.yViews.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${barHeight.toFixed(1)}" rx="2" fill="#dff5e8"></rect>`;
+  }).join('');
+  const labels = points.filter((_, index) => index === 0 || index === rows.length - 1 || index % 6 === 0).map(point => (
+    `<text x="${point.x.toFixed(1)}" y="${height - 10}" text-anchor="middle" fill="#667085" font-size="11">${escapeHtml(point.row.label)}</text>`
+  )).join('');
+  el.innerHTML = `
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Real-time page views and visitors">
+      <line x1="${pad.left}" y1="${pad.top + chartHeight}" x2="${width - pad.right}" y2="${pad.top + chartHeight}" stroke="#d8dee8"></line>
+      <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + chartHeight}" stroke="#d8dee8"></line>
+      ${bars}
+      <path d="${viewPath}" fill="none" stroke="#00737b" stroke-width="3" stroke-linejoin="round"></path>
+      <path d="${visitorPath}" fill="none" stroke="#0f5ea8" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5 5"></path>
+      <text x="${pad.left}" y="13" fill="#344054" font-size="12">Page views</text>
+      <circle cx="${pad.left + 72}" cy="9" r="4" fill="#00737b"></circle>
+      <text x="${pad.left + 90}" y="13" fill="#344054" font-size="12">Visitors</text>
+      <circle cx="${pad.left + 142}" cy="9" r="4" fill="#0f5ea8"></circle>
+      <text x="${pad.left - 8}" y="${pad.top + 4}" text-anchor="end" fill="#667085" font-size="11">${maxViews}</text>
+      <text x="${pad.left - 8}" y="${pad.top + chartHeight}" text-anchor="end" fill="#667085" font-size="11">0</text>
+      ${labels}
+    </svg>
+  `;
+}
+
+function startTrafficRefresh() {
+  stopTrafficRefresh();
+  const refresh = async () => {
+    const loaded = await refreshServerUsage();
+    if (!loaded) renderUsageTable();
+  };
+  refresh();
+  trafficRefreshTimer = setInterval(refresh, 10000);
+}
+
+function stopTrafficRefresh() {
+  if (trafficRefreshTimer) {
+    clearInterval(trafficRefreshTimer);
+    trafficRefreshTimer = null;
   }
 }
 
@@ -2781,17 +2950,18 @@ function openReportWindow() {
 }
 
 function switchSection(sectionId) {
-  if (sectionId === 'admin' && !isAdmin()) {
+  if ((sectionId === 'admin' || sectionId === 'history') && !isAdmin()) {
     sectionId = 'login';
-    showInlineStatus('#loginStatus', 'Admin access required. Use an admin account to continue.', 'warning');
+    showInlineStatus('#loginStatus', 'Admin access required. Use the same login form with an authorized admin account.', 'warning');
   }
-  const premiumSections = ['assistant', 'history', 'settings'];
+  const premiumSections = ['assistant', 'settings'];
   if (!hasAllFeatures() && premiumSections.includes(sectionId)) {
     sectionId = 'payment';
   }
   $$('.page-section').forEach(section => section.classList.toggle('active', section.id === sectionId));
   $$('.nav button').forEach(button => button.classList.toggle('active', button.dataset.section === sectionId));
-  if (sectionId === 'admin') refreshServerUsage();
+  if (sectionId === 'admin') startTrafficRefresh();
+  else stopTrafficRefresh();
 }
 
 $$('.nav button').forEach(button => button.addEventListener('click', () => switchSection(button.dataset.section)));

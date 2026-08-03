@@ -6,7 +6,7 @@ The service reports statistical signals for human review; it does not claim
 authorship or academic misconduct.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import json
 import secrets
@@ -132,7 +132,7 @@ def init_db():
                 VALUES (?, ?, ?, 'admin', 'premium', ?)
                 """,
                 (
-                    "Demo Admin",
+                    "Site Admin",
                     admin_email,
                     generate_password_hash(admin_password),
                     datetime.now(timezone.utc).isoformat(),
@@ -602,12 +602,51 @@ def admin_usage():
         ).fetchall()
     visitor_ids = set()
     last_pageview = None
+    now = datetime.now(timezone.utc)
+    bucket_count = 24
+    bucket_minutes = 5
+    buckets = []
+    for index in range(bucket_count):
+        start = now - timedelta(minutes=bucket_minutes * (bucket_count - index))
+        end = start + timedelta(minutes=bucket_minutes)
+        buckets.append(
+            {
+                "label": start.strftime("%H:%M"),
+                "start": start,
+                "end": end,
+                "page_views": 0,
+                "visitor_ids": set(),
+            }
+        )
+
     for row in pageviews:
         last_pageview = last_pageview or row["created_at"]
         metadata = row["metadata"] or ""
+        row_visitor_id = ""
         for part in metadata.split(";"):
             if part.startswith("visitor_id=") and part.removeprefix("visitor_id="):
-                visitor_ids.add(part.removeprefix("visitor_id="))
+                row_visitor_id = part.removeprefix("visitor_id=")
+                visitor_ids.add(row_visitor_id)
+        try:
+            created_at = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00"))
+        except ValueError:
+            created_at = None
+        if created_at:
+            for bucket in buckets:
+                if bucket["start"] <= created_at < bucket["end"]:
+                    bucket["page_views"] += 1
+                    if row_visitor_id:
+                        bucket["visitor_ids"].add(row_visitor_id)
+                    break
+
+    traffic_timeline = [
+        {
+            "label": bucket["label"],
+            "page_views": bucket["page_views"],
+            "unique_visitors": len(bucket["visitor_ids"]),
+        }
+        for bucket in buckets
+    ]
     return jsonify(
         {
             "success": True,
@@ -617,6 +656,7 @@ def admin_usage():
                 "page_views": len(pageviews),
                 "unique_visitors": len(visitor_ids),
                 "last_pageview": last_pageview,
+                "timeline": traffic_timeline,
             },
         }
     )
