@@ -22,6 +22,15 @@ const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const favicon = fs.readFileSync(path.join(root, "favicon.svg"), "utf8");
 const worker = `const html = ${JSON.stringify(html)};
 const favicon = ${JSON.stringify(favicon)};
+const securityHeaders = {
+  "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:5000 http://127.0.0.1:5000; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests",
+  "cross-origin-opener-policy": "same-origin",
+  "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY"
+};
 
 export default {
   async fetch(request) {
@@ -36,6 +45,7 @@ export default {
     }
     return new Response(html, {
       headers: {
+        ...securityHeaders,
         "content-type": "text/html; charset=utf-8",
         "cache-control": "no-store"
       }
