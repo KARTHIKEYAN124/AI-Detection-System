@@ -103,9 +103,7 @@ In this static MVP:
 
 1. Open the website.
 2. Go to `Login`.
-3. Use the demo admin account:
-   - Email: `admin@originscript.local`
-   - Password: `admin123`
+3. Sign in with an admin account created by the backend.
 4. Open `Admin`.
 5. Review the `User Usage` table for scans, report downloads, plan, role, and last active time.
 
@@ -116,6 +114,14 @@ The Flask backend now includes a production-style SQLite foundation:
 - `users`
 - `sessions`
 - `usage_records`
+
+Create the first admin account through environment variables before starting the Flask backend:
+
+```powershell
+$env:ADMIN_EMAIL="admin@example.com"
+$env:ADMIN_PASSWORD="use-a-strong-private-password"
+python app.py
+```
 
 The app logs server-side events for:
 

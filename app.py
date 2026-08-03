@@ -118,10 +118,14 @@ def init_db():
             )
             """
         )
-        admin_email = os.getenv("ADMIN_EMAIL", "admin@originscript.local")
-        admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
-        existing = conn.execute("SELECT id FROM users WHERE email = ?", (admin_email,)).fetchone()
-        if existing is None:
+        admin_email = os.getenv("ADMIN_EMAIL")
+        admin_password = os.getenv("ADMIN_PASSWORD")
+        existing = (
+            conn.execute("SELECT id FROM users WHERE email = ?", (admin_email,)).fetchone()
+            if admin_email
+            else None
+        )
+        if admin_email and admin_password and existing is None:
             conn.execute(
                 """
                 INSERT INTO users (name, email, password_hash, role, plan, created_at)

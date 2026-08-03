@@ -65,6 +65,9 @@
     position: sticky;
     top: 0;
     height: 100vh;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .brand {
@@ -1109,6 +1112,8 @@
     .sidebar {
       position: static;
       height: auto;
+      max-height: none;
+      overflow: visible;
     }
 
     .nav {
@@ -1312,14 +1317,9 @@
             </div>
           </section>
           <section class="panel">
-            <div class="panel-header"><h2 class="panel-title">Demo Admin Access</h2></div>
+            <div class="panel-header"><h2 class="panel-title">Admin Access</h2></div>
             <div class="panel-body">
-              <p class="small">For this static MVP only. Production admin access must use server-side authentication and role checks.</p>
-              <div class="selected-text">
-                Email: admin@originscript.local<br>
-                Password: admin123
-              </div>
-              <button id="demoAdminLogin" class="outline-button" type="button" style="margin-top:14px">Login as demo admin</button>
+              <p class="small">Admin accounts use private server-side credentials and role checks. Sign in with an authorized admin account to view usage, traffic, and operational controls.</p>
             </div>
           </section>
         </div>
@@ -2212,24 +2212,6 @@ function saveUsers(users) {
   localStorage.setItem('veritas-users', JSON.stringify(users));
 }
 
-function seedDemoAdmin() {
-  const users = getUsers();
-  if (!users.some(user => user.email === 'admin@originscript.local')) {
-    users.push({
-      name: 'Demo Admin',
-      email: 'admin@originscript.local',
-      password: 'admin123',
-      role: 'admin',
-      plan: 'premium',
-      scans: 0,
-      reports: 0,
-      createdAt: new Date().toISOString(),
-      lastActive: null
-    });
-    saveUsers(users);
-  }
-}
-
 function setCurrentUser(user) {
   currentUser = user;
   if (user) {
@@ -2360,15 +2342,6 @@ async function loginUser(event) {
   setCurrentUser(user);
   showInlineStatus('#loginStatus', `Logged in as ${user.role}.`, 'success');
   switchSection(user.role === 'admin' ? 'admin' : 'dashboard');
-}
-
-function loginDemoAdmin() {
-  seedDemoAdmin();
-  const user = getUsers().find(item => item.email === 'admin@originscript.local');
-  user.lastActive = new Date().toISOString();
-  saveUsers(getUsers().map(item => item.email === user.email ? user : item));
-  setCurrentUser(user);
-  switchSection('admin');
 }
 
 function logoutUser() {
@@ -2885,7 +2858,6 @@ $('#exportRevision').addEventListener('click', exportCurrentRevision);
 $('#reanalyzeRevision').addEventListener('click', reanalyzeCurrentRevision);
 $('#registerForm').addEventListener('submit', registerUser);
 $('#loginForm').addEventListener('submit', loginUser);
-$('#demoAdminLogin').addEventListener('click', loginDemoAdmin);
 $('#logoutBtn').addEventListener('click', logoutUser);
 $('#clearHistory').addEventListener('click', () => {
   localStorage.removeItem('veritas-history');
@@ -2902,7 +2874,6 @@ setInterval(checkServer, 5000);
 localStorage.setItem('veritas-local-pageviews', String(Number(localStorage.getItem('veritas-local-pageviews') || 0) + 1));
 localStorage.setItem('veritas-local-last-pageview', new Date().toLocaleString());
 logPageView();
-seedDemoAdmin();
 setPlan(currentPlan);
 renderAccountState();
 handlePaymentReturn();
